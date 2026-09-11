@@ -44,3 +44,19 @@
 - Сформирована концепция отказа от устаревшего чистого TCP Reality в пользу `xHTTP (packet-up)`.
 - Созданы базовые файлы документации (`README.md`, `CHANGELOG.md`, `DEV_CONTEXT.md`).
 - Ожидаются финальные функциональные требования от заказчика.
+
+---
+
+### [2026-09-10] Спецификация генерации пользователей (newuser & routing)
+- **Outbounds**:
+  - `tag: "direct"`: протокол freedom, `domainStrategy: "UseIPv4"`.
+  - `tag: "warp"`: протокол wireguard / outbound к Cloudflare WARP.
+- **Routing Rules**:
+  - Маппинг правил на основе поля `user: ["email1", "email2"]` для отправки определенных клиентов в `tag: "warp"`.
+- **Reality Inbound**:
+  - `serverNames`: пул совместимых SNI (например, Apple CDN, Microsoft/Azure, Cloudflare edge, Speedtest).
+  - При вызове `newuser`:
+    1. Ввод email.
+    2. Выбор: `Enable WARP? [y/N]` (default: N).
+    3. Выбор SNI: интерактивный список доменов из конфига + опция `Random`.
+    4. Генерация ссылки VLESS с выбранным SNI и `xhttp (packet-up)`.
