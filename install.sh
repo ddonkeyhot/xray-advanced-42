@@ -167,8 +167,8 @@ if [[ ! -f "$REALITY_ENV" ]]; then
         exit 1
     fi
     # Отлавливаем ошибки grep через || true, чтобы скрипт не упал по set -e
-    PRIVATE_KEY=$(echo "$KEY_PAIR" | grep -i 'Private key:' | awk '{print $3}' || true)
-    PUBLIC_KEY=$(echo "$KEY_PAIR" | grep -i 'Public key:' | awk '{print $3}' || true)
+    PRIVATE_KEY=$(echo "$KEY_PAIR" | grep -i 'Private' | awk -F':' '{print $2}' | tr -d ' ' || true)
+    PUBLIC_KEY=$(echo "$KEY_PAIR" | grep -i 'Public' | awk -F':' '{print $2}' | tr -d ' ' || true)
     SHORT_ID=$(openssl rand -hex 8 || tr -dc 'a-f0-9' < /dev/urandom | head -c 16) || true
 
     if [[ -z "$PRIVATE_KEY" || -z "$PUBLIC_KEY" ]]; then
