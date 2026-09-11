@@ -369,6 +369,10 @@ if [[ "$WARP_CONFIG_AVAILABLE" = true ]]; then
     jq --argjson warp "$WARP_OUTBOUND" '.outbounds += [$warp]' "$CONFIG_FILE" > "$TMP_CFG" && mv "$TMP_CFG" "$CONFIG_FILE"
 fi
 
+# Исправляем права после mktemp и cat
+chmod 644 "$CONFIG_FILE"
+chown nobody:nogroup "$CONFIG_FILE" 2>/dev/null || chown nobody:nobody "$CONFIG_FILE" 2>/dev/null || true
+
 if ! /usr/local/bin/xray -test -config "$CONFIG_FILE"; then
     echo -e "${RED}[ОШИБКА] Конфигурация Xray не прошла проверку синтаксиса!${NC}"
     exit 1
