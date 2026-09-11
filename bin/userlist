@@ -21,6 +21,7 @@ fi
 source "$REALITY_ENV"
 SERVER_IP=$(curl -4 -s --connect-timeout 3 icanhazip.com || curl -4 -s --connect-timeout 3 api.ipify.org || echo "YOUR_SERVER_IP")
 XRAY_PORT=$(jq -r '.inbounds[0].port // 443' "$CONFIG_FILE")
+XHTTP_PATH=$(jq -r '.inbounds[0].streamSettings.xhttpSettings.path // "/download"' "$CONFIG_FILE")
 
 while true; do
     clear
@@ -93,8 +94,7 @@ while true; do
         echo -e "${CYAN}----------------------------------------------------------------${NC}"
         echo -e " [1] 🔑 Показать данные подключения (VLESS-ссылка и QR-код)"
         echo -e " [2] 🔄 Изменить статус WARP ($(if [[ "$CUR_WARP" == "true" ]]; then echo "ВКЛ ➔ ВЫКЛ"; else echo "ВЫКЛ ➔ ВКЛ"; fi))"
-        echo -e " [3] 🌐 Сменить SNI маскировки из пула"
-        echo -e " [4] ❌ Удалить пользователя"
+        echo -e " [3] ❌ Удалить пользователя"
         echo -e "${CYAN}----------------------------------------------------------------${NC}"
         echo -e " [0] ← Назад к списку пользователей"
         echo -e "${CYAN}================================================================${NC}"
@@ -103,7 +103,7 @@ while true; do
         case "$SUB_ACTION" in
             1)
                 clear
-                VLESS_URI="vless://${CUR_UUID}@${SERVER_IP}:${XRAY_PORT}?security=reality&type=tcp&sni=${CUR_SNI}&fp=chrome&pbk=${PUBLIC_KEY}&sid=${SHORT_ID}#${CUR_EMAIL}"
+                VLESS_URI="vless://${CUR_UUID}@${SERVER_IP}:${XRAY_PORT}?security=reality&type=xhttp&path=${XHTTP_PATH}&mode=packet-up&sni=${CUR_SNI}&fp=chrome&pbk=${PUBLIC_KEY}&sid=${SHORT_ID}#${CUR_EMAIL}"
                 echo -e "${CYAN}================================================================${NC}"
                 echo -e "${CYAN}               ДАННЫЕ ПОДКЛЮЧЕНИЯ: $CUR_EMAIL                  ${NC}"
                 echo -e "${CYAN}================================================================${NC}"
@@ -146,39 +146,6 @@ while true; do
                 fi
                 ;;
             3)
-                echo -e "\n${BLUE}Доступные SNI:${NC}"
-                mapfile -t SNI_LIST < "$SNI_FILE"
-                for s_idx in "${!SNI_LIST[@]}"; do
-                    echo -e " [$((s_idx+1))] ${SNI_LIST[$s_idx]}"
-                done
-                read -p "Выберите номер нового SNI [1-${#SNI_LIST[@]}]: " NEW_SNI_CHOICE
-                if [[ "$NEW_SNI_CHOICE" =~ ^[0-9]+$ ]] && (( NEW_SNI_CHOICE >= 1 && NEW_SNI_CHOICE <= ${#SNI_LIST[@]} )); then
-                    CHOSEN_SNI="${SNI_LIST[$((NEW_SNI_CHOICE-1))]}"
-                    TMP_CFG=$(mktemp --suffix=.json)
-                    jq --arg email "$CUR_EMAIL" --arg sni "$CHOSEN_SNI" '
-                        (.inbounds[0].settings.clients[] | select(.email == $email).sni) = $sni
-                    ' "$CONFIG_FILE" > "$TMP_CFG"
-                    mv "$TMP_CFG" "$CONFIG_FILE" && chmod 644 "$CONFIG_FILE"
-                    systemctl restart xray
-                    echo -e "${GREEN}✓ SNI успешно обновлен на $CHOSEN_SNI!${NC}"
-                    sleep 1
-                    clear
-                    CUR_SNI="$CHOSEN_SNI"
-                    VLESS_URI="vless://${CUR_UUID}@${SERVER_IP}:${XRAY_PORT}?security=reality&type=tcp&sni=${CUR_SNI}&fp=chrome&pbk=${PUBLIC_KEY}&sid=${SHORT_ID}#${CUR_EMAIL}"
-                    echo -e "${CYAN}================================================================${NC}"
-                    echo -e "${CYAN}               ДАННЫЕ ПОДКЛЮЧЕНИЯ: $CUR_EMAIL                  ${NC}"
-                    echo -e "${CYAN}================================================================${NC}"
-                    echo -e "${YELLOW}VLESS URI:${NC}\n${CYAN}${VLESS_URI}${NC}\n"
-                    echo -e "${YELLOW}QR-код для подключения:${NC}\n"
-                    if command -v qrencode >/dev/null 2>&1; then
-                        qrencode -t ANSIUTF8 "${VLESS_URI}" || true
-                    fi
-                    echo -e "\n${CYAN}================================================================${NC}"
-                    read -p "Нажмите Enter для возврата к списку пользователей..."
-                    break
-                fi
-                ;;
-            4)
                 echo -e "\n${RED}⚠️  ВНИМАНИЕ! Вы собираетесь удалить пользователя '$CUR_EMAIL'.${NC}"
                 read -p "Вы абсолютно уверены? [y/N]: " CONFIRM_DEL
                 if [[ "$CONFIRM_DEL" =~ ^[yYдД]$ ]]; then

@@ -208,9 +208,6 @@ fi
 # Пул SNI
 cat << 'SNI_EOF' > "$SNI_FILE"
 gateway.icloud.com
-swdist.apple.com
-appldnld.apple.com
-configuration.apple.com
 SNI_EOF
 
 # Шаг 5: Регистрация Cloudflare WARP
@@ -274,7 +271,11 @@ cat << CONF_EOF > "$CONFIG_FILE"
         "decryption": "none"
       },
       "streamSettings": {
-        "network": "tcp",
+        "network": "xhttp",
+        "xhttpSettings": {
+          "path": "/download",
+          "mode": "packet-up"
+        },
         "security": "reality",
         "realitySettings": {
           "show": false,

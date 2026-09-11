@@ -28,8 +28,10 @@ fi
 
 SERVER_IP=$(curl -4 -s --connect-timeout 3 icanhazip.com || curl -4 -s --connect-timeout 3 api.ipify.org || echo "YOUR_SERVER_IP")
 XRAY_PORT=$(jq -r '.inbounds[0].port // 443' "$CONFIG_FILE")
+XHTTP_PATH=$(jq -r '.inbounds[0].streamSettings.xhttpSettings.path // "/download"' "$CONFIG_FILE")
 
 while true; do
+
     clear
     echo -e "${CYAN}================================================================${NC}"
     echo -e "${CYAN}            МАСТЕР СОЗДАНИЯ НОВОГО ПОЛЬЗОВАТЕЛЯ                 ${NC}"
@@ -54,26 +56,12 @@ while true; do
     echo -e "WARP скрывает реальный IP сервера и открывает ChatGPT/стриминги."
     echo -e "По умолчанию рекомендуется ${GREEN}НЕТ (N)${NC} для максимальной скорости."
     read -p "Включить WARP для '$USER_NAME'? [y/N] (по умолчанию N): " WARP_INPUT
+    SELECTED_SNI="gateway.icloud.com"
     WARP_ENABLED=false
     if [[ "$WARP_INPUT" =~ ^[yYдД]$ ]]; then
         WARP_ENABLED=true
     fi
 
-    echo -e "\n${BLUE}Выбор SNI маскировки:${NC}"
-    mapfile -t SNI_LIST < "$SNI_FILE"
-    for i in "${!SNI_LIST[@]}"; do
-        echo -e " [$((i+1))] ${SNI_LIST[$i]}"
-    done
-    echo -e " [r] Случайный SNI из пула"
-    read -p "Выберите номер SNI [1-${#SNI_LIST[@]} или r] (по умолчанию 1): " SNI_CHOICE
-
-    SELECTED_SNI="${SNI_LIST[0]}"
-    if [[ "$SNI_CHOICE" =~ ^[0-9]+$ ]] && (( SNI_CHOICE >= 1 && SNI_CHOICE <= ${#SNI_LIST[@]} )); then
-        SELECTED_SNI="${SNI_LIST[$((SNI_CHOICE-1))]}"
-    elif [[ "$SNI_CHOICE" =~ ^[rR]$ ]]; then
-        RANDOM_IDX=$((RANDOM % ${#SNI_LIST[@]}))
-        SELECTED_SNI="${SNI_LIST[$RANDOM_IDX]}"
-    fi
 
     NEW_UUID=$(/usr/local/bin/xray uuid)
 
@@ -99,7 +87,6 @@ while true; do
 
         mv "$TMP_CFG" "$CONFIG_FILE" && chmod 644 "$CONFIG_FILE"
         systemctl restart xray
-        echo "[$(date '+%Y-%m-%d %H:%M:%S')] [INFO] [CLIENT] Создан пользователь '$USER_NAME' (UUID: $NEW_UUID, WARP: $WARP_ENABLED, SNI: $SELECTED_SNI)" >> "$LOG_FILE"
     else
         echo -e "${RED}[ОШИБКА] Сгенерированный конфиг не прошел валидацию Xray! Отмена.${NC}"
         echo -e "${YELLOW}Детали ошибки:${NC}\n$TEST_OUT"
@@ -108,7 +95,8 @@ while true; do
         break
     fi
 
-    VLESS_URI="vless://${NEW_UUID}@${SERVER_IP}:${XRAY_PORT}?security=reality&type=tcp&sni=${SELECTED_SNI}&fp=chrome&pbk=${PUBLIC_KEY}&sid=${SHORT_ID}#${USER_NAME}"
+
+    VLESS_URI="vless://${NEW_UUID}@${SERVER_IP}:${XRAY_PORT}?security=reality&type=xhttp&path=${XHTTP_PATH}&mode=packet-up&sni=${SELECTED_SNI}&fp=chrome&pbk=${PUBLIC_KEY}&sid=${SHORT_ID}#${USER_NAME}"
 
     clear
     echo -e "${GREEN}================================================================${NC}"
@@ -117,7 +105,6 @@ while true; do
     echo -e "Имя:        ${CYAN}$USER_NAME${NC}"
     echo -e "UUID:       ${CYAN}$NEW_UUID${NC}"
     echo -e "Режим WARP: $(if [[ "$WARP_ENABLED" = true ]]; then echo -e "${GREEN}ВКЛЮЧЕН${NC}"; else echo -e "${YELLOW}ВЫКЛЮЧЕН (Direct)${NC}"; fi)"
-    echo -e "Маскировка: ${CYAN}$SELECTED_SNI${NC}"
     echo -e "Транспорт:  ${CYAN}xHTTP (packet-up)${NC}"
     echo -e "${CYAN}----------------------------------------------------------------${NC}"
     echo -e "${YELLOW}Строка подключения (VLESS URI):${NC}"
