@@ -274,6 +274,7 @@ cat << CONF_EOF > "$CONFIG_FILE"
         "network": "xhttp",
         "xhttpSettings": {
           "path": "/download",
+          "host": "gateway.icloud.com",
           "mode": "packet-up"
         },
         "security": "reality",
