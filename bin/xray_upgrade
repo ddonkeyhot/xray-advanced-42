@@ -55,7 +55,7 @@ case "$UPG_CHOICE" in
         echo -e "\n${BLUE}▶ Обновление ядра...${NC}"
         bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install >/dev/null 2>&1 || true
         echo -e "\n${BLUE}▶ Обновление баз GeoIP...${NC}"
-        xray_update_geoip
+        xray_update_geoip >/dev/null 2>&1 || true
         echo -e "\n${BLUE}▶ Обновление утилит...${NC}"
         TMP_BIN=$(mktemp -d)
         curl -sL https://github.com/ddonkeyhot/xray-advanced-42/archive/refs/heads/main.tar.gz | tar -xz -C "$TMP_BIN" --strip-components=1
@@ -88,7 +88,7 @@ case "$UPG_CHOICE" in
         sleep 2
         ;;
     4)
-        xray_update_geoip
+        xray_update_geoip >/dev/null 2>&1 || true
         sleep 2
         ;;
     0|*)
