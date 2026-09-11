@@ -143,7 +143,8 @@ echo -e "${GREEN}[✓] Зависимости установлены.${NC}"
 
 # Шаг 2: Установка Xray-core
 echo -e "\n${BLUE}▶ [2/7] Установка ядра Xray-core последней версии...${NC}"
-bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install || RET=$?
+rm -f /usr/local/bin/xray
+    bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install || RET=$?
     if [[ "${RET:-0}" -ne 0 ]]; then
         if ! /usr/local/bin/xray version >/dev/null 2>&1; then
     echo -e "${RED}[ОШИБКА] Не удалось установить Xray-core. Проверьте вывод выше.${NC}"
@@ -361,7 +362,7 @@ if [[ "$WARP_CONFIG_AVAILABLE" = true ]]; then
           tag: "warp",
           settings: {
             secretKey: $priv,
-            address: [$ip4, $ip6],
+            address: (if $ip6 == "null/128" or $ip6 == "/128" then [$ip4] else [$ip4, $ip6] end),
             peers: [
               {
                 publicKey: $pub,
@@ -402,7 +403,6 @@ else
     rm -rf "$TMP_BIN"
 fi
 chmod +x /usr/local/bin/*
-ln -sf /usr/local/bin/xray_menu /usr/local/bin/xray || true
 echo -e "${GREEN}[✓] Утилиты (xray_menu, userlist, newuser, show_problems, xray_update_geoip, xray_upgrade, xray_help) установлены.${NC}"
 
 log_msg "INFO" "INSTALL" "Сервер успешно установлен и запущен на порту 443."
@@ -419,6 +419,6 @@ if [[ -z "$CREATE_FIRST" || "$CREATE_FIRST" =~ ^[yYдД]$ ]]; then
 fi
 
 echo -e "\n${CYAN}================================================================${NC}"
-echo -e "Управление сервером в любое время: команда ${GREEN}xray${NC} или ${GREEN}xray_menu${NC}"
+echo -e "Управление сервером в любое время: ${GREEN}xray_menu${NC}"
 echo -e "Справка по всем командам:          команда ${GREEN}xray_help${NC}"
 echo -e "${CYAN}================================================================${NC}\n"
