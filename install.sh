@@ -287,9 +287,7 @@ cat << CONF_EOF > "$CONFIG_FILE"
           "serverNames": [
             "gateway.icloud.com",
             "swdist.apple.com",
-            "appldnld.apple.com",
-            "www.microsoft.com",
-            "s0.awsstatic.com"
+            "appldnld.apple.com"
           ],
           "privateKey": "$PRIVATE_KEY",
           "shortIds": [
