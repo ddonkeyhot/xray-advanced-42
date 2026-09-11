@@ -233,10 +233,10 @@ WARP_RESP=$(curl -s -X POST "https://api.cloudflareclient.com/v0a1922/reg" \
     -H "Content-Type: application/json; charset=UTF-8" \
     -d "{\"key\":\"${WARP_LOCAL_PUB}\",\"install_id\":\"\",\"fcm_token\":\"\",\"tos\":\"$(date -u +%Y-%m-%dT%H:%M:%S.000Z)\",\"model\":\"PC\",\"serial_number\":\"\",\"locale\":\"en_US\"}" || true)
 
-if echo "$WARP_RESP" | jq -e '.result.id' >/dev/null 2>&1; then
+if echo "$WARP_RESP" | jq -e '.id' >/dev/null 2>&1; then
     WARP_PRIVATE_KEY="$WARP_LOCAL_PRIV"
-    WARP_IPV4=$(echo "$WARP_RESP" | jq -r '.result.config.interface.addresses.v4')
-    WARP_IPV6=$(echo "$WARP_RESP" | jq -r '.result.config.interface.addresses.v6')
+    WARP_IPV4=$(echo "$WARP_RESP" | jq -r '.config.interface.addresses.v4')
+    WARP_IPV6=$(echo "$WARP_RESP" | jq -r '.config.interface.addresses.v6')
     WARP_CONFIG_AVAILABLE=true
     echo -e "${GREEN}[✓] Учетная запись Cloudflare WARP зарегистрирована (IPv4: $WARP_IPV4).${NC}"
     log_msg "INFO" "WARP" "WARP успешно зарегистрирован (IP: $WARP_IPV4)"
