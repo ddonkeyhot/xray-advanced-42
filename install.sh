@@ -376,7 +376,7 @@ fi
 chmod 644 "$CONFIG_FILE"
 chown nobody:nogroup "$CONFIG_FILE" 2>/dev/null || chown nobody:nobody "$CONFIG_FILE" 2>/dev/null || true
 
-if ! /usr/local/bin/xray -test -config "$CONFIG_FILE"; then
+if ! /usr/local/bin/xray run -test -config "$CONFIG_FILE"; then
     echo -e "${RED}[ОШИБКА] Конфигурация Xray не прошла проверку синтаксиса!${NC}"
     exit 1
 fi
