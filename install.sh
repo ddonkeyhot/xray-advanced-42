@@ -271,8 +271,8 @@ cat << CONF_EOF > "$CONFIG_FILE"
         "decryption": "none"
       },
       "streamSettings": {
-        "network": "splithttp",
-        "splithttpSettings": {
+        "network": "xhttp",
+        "xhttpSettings": {
           "path": "/download",
           "mode": "packet-up"
         },
