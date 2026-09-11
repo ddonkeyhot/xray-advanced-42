@@ -1,0 +1,97 @@
+#!/bin/bash
+set -euo pipefail
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+LOG_FILE="/var/log/xray-advanced-42/health.log"
+BACKUP_DIR="/var/lib/xray-advanced-42/backup"
+CONFIG_FILE="/usr/local/etc/xray/config.json"
+
+clear
+echo -e "${CYAN}================================================================${NC}"
+echo -e "${CYAN}            АУДИТ ВЕРСИЙ И ОБНОВЛЕНИЕ XRAY ADVANCED 42          ${NC}"
+echo -e "${CYAN}================================================================${NC}"
+echo -e "Опрашиваю репозитории GitHub...\n"
+
+# 1. Версия ядра Xray
+CUR_CORE=$(xray version | head -n 1 | awk '{print $2}' || echo "N/A")
+NEW_CORE=$(curl -s "https://api.github.com/repos/XTLS/Xray-core/releases/latest" | jq -r '.tag_name' || echo "N/A")
+
+# 2. Версия скриптов (читаем из последнего коммита GitHub, локально не храним версию, просто показываем возможность)
+LATEST_COMMIT=$(curl -s "https://api.github.com/repos/ddonkeyhot/xray-advanced-42/commits/main" | jq -r '.sha' | cut -c 1-7 || echo "N/A")
+
+# 3. GeoIP
+GEOIP_DATE=$(stat -c %y "/usr/local/share/xray/geoip.dat" | cut -d' ' -f1 || echo "N/A")
+
+printf " %-25s | %-15s | %-15s \n" "КОМПОНЕНТ" "ТЕКУЩАЯ ВЕРСИЯ" "ДОСТУПНО НА GITHUB"
+printf "----------------------------------------------------------------\n"
+printf " %-25s | %-15s | %-15s \n" "Ядро Xray-core" "$CUR_CORE" "$NEW_CORE"
+printf " %-25s | %-15s | %-15s \n" "Утилиты (xray-advanced)" "Локальные" "Коммит $LATEST_COMMIT"
+printf " %-25s | %-15s | %-15s \n" "Базы GeoIP/GeoSite" "$GEOIP_DATE" "Ежедневный билд"
+echo -e "${CYAN}================================================================${NC}"
+echo -e " [1] Обновить ВСЁ (Ядро + Утилиты + Базы GeoIP)"
+echo -e " [2] Обновить ТОЛЬКО Ядро Xray-core"
+echo -e " [3] Обновить ТОЛЬКО Утилиты управления (bin/)"
+echo -e " [4] Обновить ТОЛЬКО Базы GeoIP/GeoSite"
+echo -e " [0] Отмена и выход"
+echo -e "${CYAN}================================================================${NC}"
+read -p "Выберите действие [0-4]: " UPG_CHOICE
+
+backup_config() {
+    local TS=$(date "+%Y%m%d_%H%M%S")
+    mkdir -p "$BACKUP_DIR"
+    cp "$CONFIG_FILE" "$BACKUP_DIR/config_$TS.json"
+    echo -e "${BLUE}▶ Создан бэкап конфига: $BACKUP_DIR/config_$TS.json${NC}"
+}
+
+case "$UPG_CHOICE" in
+    1)
+        backup_config
+        echo -e "\n${BLUE}▶ Обновление ядра...${NC}"
+        bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install >/dev/null 2>&1
+        echo -e "\n${BLUE}▶ Обновление баз GeoIP...${NC}"
+        xray_update_geoip
+        echo -e "\n${BLUE}▶ Обновление утилит...${NC}"
+        TMP_BIN=$(mktemp -d)
+        curl -sL https://github.com/ddonkeyhot/xray-advanced-42/archive/refs/heads/main.tar.gz | tar -xz -C "$TMP_BIN" --strip-components=1
+        cp -r "$TMP_BIN/bin/"* /usr/local/bin/
+        chmod +x /usr/local/bin/*
+        rm -rf "$TMP_BIN"
+        echo -e "${GREEN}✓ Система полностью обновлена.${NC}"
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] [INFO] [UPGRADE] Выполнено полное обновление системы" >> "$LOG_FILE"
+        systemctl restart xray
+        sleep 2
+        ;;
+    2)
+        backup_config
+        echo -e "\n${BLUE}▶ Обновление ядра Xray-core...${NC}"
+        bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install >/dev/null 2>&1
+        echo -e "${GREEN}✓ Ядро Xray-core обновлено.${NC}"
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] [INFO] [UPGRADE] Ядро Xray обновлено" >> "$LOG_FILE"
+        systemctl restart xray
+        sleep 2
+        ;;
+    3)
+        echo -e "\n${BLUE}▶ Скачивание утилит...${NC}"
+        TMP_BIN=$(mktemp -d)
+        curl -sL https://github.com/ddonkeyhot/xray-advanced-42/archive/refs/heads/main.tar.gz | tar -xz -C "$TMP_BIN" --strip-components=1
+        cp -r "$TMP_BIN/bin/"* /usr/local/bin/
+        chmod +x /usr/local/bin/*
+        rm -rf "$TMP_BIN"
+        echo -e "${GREEN}✓ Утилиты обновлены.${NC}"
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] [INFO] [UPGRADE] Утилиты CLI обновлены" >> "$LOG_FILE"
+        sleep 2
+        ;;
+    4)
+        xray_update_geoip
+        sleep 2
+        ;;
+    0|*)
+        echo -e "${GREEN}Отмена.${NC}"
+        ;;
+esac

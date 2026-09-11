@@ -1,0 +1,26 @@
+#!/bin/bash
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+clear
+echo -e "${CYAN}================================================================${NC}"
+echo -e "${CYAN}             XRAY ADVANCED 42 — СПРАВОЧНИК КОМАНД               ${NC}"
+echo -e "${CYAN}================================================================${NC}"
+echo -e " Все команды доступны глобально из терминала."
+echo -e ""
+echo -e " ${GREEN}xray${NC} (или ${GREEN}xray_menu${NC}) — Главный интерактивный пульт управления (TUI)."
+echo -e " ${GREEN}userlist${NC}              — Управление клиентами (Показать QR, включить WARP, сменить SNI, удалить)."
+echo -e " ${GREEN}newuser${NC}               — Мастер создания нового пользователя."
+echo -e " ${GREEN}show_problems${NC}         — Проверка здоровья сервиса и чтение лога инцидентов."
+echo -e " ${GREEN}xray_update_geoip${NC}     — Принудительно скачать свежие базы для блокировки РФ."
+echo -e " ${GREEN}xray_upgrade${NC}          — Аудит версий и обновление компонентов."
+echo -e " ${GREEN}xray_help${NC}             — Показать эту справку."
+echo -e "${CYAN}================================================================${NC}"
+echo -e " Журнал событий:  ${YELLOW}tail -f /var/log/xray-advanced-42/health.log${NC}"
+echo -e " Конфиг Xray:     ${YELLOW}/usr/local/etc/xray/config.json${NC}"
+echo -e " Ключи Reality:   ${YELLOW}/usr/local/etc/xray/reality.env${NC}"
+echo -e "${CYAN}================================================================${NC}"
