@@ -7,122 +7,159 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 NC='\033[0m'
+
 CONFIG_FILE="/usr/local/etc/xray/config.json"
 REALITY_ENV="/usr/local/etc/xray/reality.env"
 SNI_FILE="/usr/local/etc/xray/sni_pool.txt"
 LOG_FILE="/var/log/xray-advanced-42/health.log"
+
 if [[ ! -f "$CONFIG_FILE" || ! -f "$REALITY_ENV" ]]; then
     echo -e "${RED}[ОШИБКА] Конфигурация Xray не найдена.${NC}"
     exit 1
 fi
+
 source "$REALITY_ENV"
+
 SERVER_IP=$(curl -4 -s --connect-timeout 3 icanhazip.com || curl -4 -s --connect-timeout 3 api.ipify.org || echo "YOUR_SERVER_IP")
 XRAY_PORT=$(jq -r '.inbounds[0].port // 443' "$CONFIG_FILE")
 XHTTP_PATH=$(jq -r '.inbounds[0].streamSettings.xhttpSettings.path // "/download"' "$CONFIG_FILE")
+
 while true; do
     clear
-                VLESS_URI="vless://${CUR_UUID}@${SERVER_IP}:${XRAY_PORT}?security=reality&path=%2F&host=&mode=auto&sni=${CUR_SNI}&fp=chrome&pbk=${PUBLIC_KEY}&sid=${SHORT_ID}&spx=%2F&type=xhttp&encryption=none#${CUR_EMAIL}"
     echo -e "${CYAN}================================================================${NC}"
-    echo -e "${CYAN}                     СПИСОК ПОЛЬЗОВАТЕЛЕЙ XRAY                  ${NC}"
-    CLIENT_COUNT=$(jq '.inbounds[0].settings.clients | length' "$CONFIG_FILE")
-    if (( CLIENT_COUNT == 0 )); then
-        echo -e "${YELLOW}Пользователи еще не созданы.${NC}"
-        echo -e "Используйте команду ${GREEN}newuser${NC} для создания первого клиента."
-        echo -e "${CYAN}----------------------------------------------------------------${NC}"
-        echo -e " [0] ← Назад в главное меню (или выход)"
-        echo -e " [n] Создать пользователя прямо сейчас"
-        read -p "Выберите действие: " EMPTY_CHOICE
-        if [[ "$EMPTY_CHOICE" =~ ^[nNтТ]$ ]]; then
-            newuser
-            continue
-        elif [[ "$EMPTY_CHOICE" == "0" ]]; then
-            break
-        else
-            echo -e "${RED}[ОШИБКА] Неверный выбор.${NC}"
-            sleep 1
-        fi
-    fi
-    for i in $(seq 0 $((CLIENT_COUNT - 1))); do
-        EMAIL=$(jq -r ".inbounds[0].settings.clients[$i].email" "$CONFIG_FILE")
-        SNI_VAL=$(jq -r ".inbounds[0].settings.clients[$i].sni // \"default\"" "$CONFIG_FILE")
-        WARP_VAL=$(jq -r ".inbounds[0].settings.clients[$i].warp // false" "$CONFIG_FILE")
-        
-        WARP_STATUS="${YELLOW}ВЫКЛ${NC}"
-        if [[ "$WARP_VAL" == "true" ]]; then
-            WARP_STATUS="${GREEN}ВКЛ${NC}"
-        printf " [%d] %-16s (WARP: %b, SNI: %s)\n" "$((i+1))" "$EMAIL" "$WARP_STATUS" "$SNI_VAL"
-    done
-    echo -e "${CYAN}----------------------------------------------------------------${NC}"
-    echo -e " [0] ← Назад в главное меню (или выход)"
-    read -p "Выберите номер пользователя для управления [0-$CLIENT_COUNT]: " USER_INDEX
-    if [[ "$USER_INDEX" == "0" || -z "$USER_INDEX" ]]; then
-        break
-    if ! [[ "$USER_INDEX" =~ ^[0-9]+$ ]] || (( USER_INDEX < 1 || USER_INDEX > CLIENT_COUNT )); then
-        echo -e "${RED}[ОШИБКА] Неверный номер пользователя.${NC}"
-        sleep 1
-        continue
-    ARR_IDX=$((USER_INDEX - 1))
-    CUR_EMAIL=$(jq -r ".inbounds[0].settings.clients[$ARR_IDX].email" "$CONFIG_FILE")
-    CUR_UUID=$(jq -r ".inbounds[0].settings.clients[$ARR_IDX].id" "$CONFIG_FILE")
-    CUR_SNI=$(jq -r ".inbounds[0].settings.clients[$ARR_IDX].sni // \"gateway.icloud.com\"" "$CONFIG_FILE")
-    CUR_WARP=$(jq -r ".inbounds[0].settings.clients[$ARR_IDX].warp // false" "$CONFIG_FILE")
-    while true; do
-        clear
+    echo -e "${CYAN}               УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ                        ${NC}"
+    echo -e "${CYAN}================================================================${NC}"
+
+    CLIENTS_JSON=$(jq -c '.inbounds[0].settings.clients' "$CONFIG_FILE")
+    CLIENT_COUNT=$(echo "$CLIENTS_JSON" | jq '. | length')
+
+    if [[ "$CLIENT_COUNT" -eq 0 ]]; then
+        echo -e "${YELLOW}Нет ни одного созданного пользователя.${NC}"
         echo -e "${CYAN}================================================================${NC}"
-        echo -e "${CYAN}                 УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЕМ: ${YELLOW}$CUR_EMAIL${NC}"
-        echo -e " Статус WARP:       $(if [[ "$CUR_WARP" == "true" ]]; then echo -e "${GREEN}ВКЛЮЧЕН (весь трафик через Cloudflare)${NC}"; else echo -e "${YELLOW}ВЫКЛЮЧЕН (прямой трафик Direct)${NC}"; fi)"
-        echo -e " Текущий SNI:       ${CYAN}$CUR_SNI${NC}"
-        echo -e " UUID:              ${CYAN}$CUR_UUID${NC}"
-        echo -e " [1] 🔑 Показать данные подключения (VLESS-ссылка и QR-код)"
-        echo -e " [2] 🔄 Изменить статус WARP ($(if [[ "$CUR_WARP" == "true" ]]; then echo "ВКЛ ➔ ВЫКЛ"; else echo "ВЫКЛ ➔ ВКЛ"; fi))"
-        echo -e " [3] ❌ Удалить пользователя"
-        echo -e " [0] ← Назад к списку пользователей"
-        read -p "Выберите действие [0-4]: " SUB_ACTION
-        case "$SUB_ACTION" in
-            1)
-                clear
-                echo -e "${CYAN}================================================================${NC}"
-                echo -e "${CYAN}               ДАННЫЕ ПОДКЛЮЧЕНИЯ: $CUR_EMAIL                  ${NC}"
-                echo -e "${YELLOW}VLESS URI:${NC}\n${CYAN}${VLESS_URI}${NC}\n"
-                echo -e "${YELLOW}QR-код для подключения:${NC}\n"
-                if command -v qrencode >/dev/null 2>&1; then
-                    qrencode -t ANSIUTF8 "${VLESS_URI}" || true
-                fi
-                echo -e "\n${CYAN}================================================================${NC}"
-                read -p "Нажмите Enter для возврата к списку пользователей..."
-                break
-                ;;
-            2)
-                NEW_WARP_STATE=true
-                if [[ "$CUR_WARP" == "true" ]]; then
-                    NEW_WARP_STATE=false
-                read -p "Переключить статус WARP на '$NEW_WARP_STATE'? [y/N]: " CONFIRM_WARP
-                if [[ "$CONFIRM_WARP" =~ ^[yYдД]$ ]]; then
+        read -p "Нажмите Enter для возврата в главное меню..."
+        exit 0
+    fi
+
+    echo -e "Выберите пользователя для управления:\n"
+
+    WARP_USERS=$(jq -r '.routing.rules[] | select(.outboundTag == "warp") | .user[]?' "$CONFIG_FILE" 2>/dev/null || echo "")
+
+    for ((i=0; i<CLIENT_COUNT; i++)); do
+        CLIENT_EMAIL=$(echo "$CLIENTS_JSON" | jq -r ".[$i].email")
+        CLIENT_SNI=$(echo "$CLIENTS_JSON" | jq -r ".[$i].sni // \"gateway.icloud.com\"")
+        
+        HAS_WARP="false"
+        if echo "$WARP_USERS" | grep -qx "$CLIENT_EMAIL"; then
+            HAS_WARP="true"
+        fi
+
+        WARP_STR=$(if [[ "$HAS_WARP" == "true" ]]; then echo -e "${GREEN}[WARP ВКЛ]${NC}"; else echo -e "${YELLOW}[WARP ВЫКЛ]${NC}"; fi)
+
+        echo -e " [$((i+1))] ${CYAN}$CLIENT_EMAIL${NC} $WARP_STR (SNI: $CLIENT_SNI)"
+    done
+
+    echo -e "\n [0] ← Назад в главное меню"
+    echo -e "${CYAN}================================================================${NC}"
+    
+    read -p "Введите номер [0-$CLIENT_COUNT]: " USER_CHOICE
+
+    if [[ "$USER_CHOICE" == "0" ]]; then
+        exit 0
+    fi
+
+    if [[ "$USER_CHOICE" =~ ^[0-9]+$ ]] && (( USER_CHOICE >= 1 && USER_CHOICE <= CLIENT_COUNT )); then
+        IDX=$((USER_CHOICE - 1))
+        CUR_EMAIL=$(echo "$CLIENTS_JSON" | jq -r ".[$IDX].email")
+        CUR_UUID=$(echo "$CLIENTS_JSON" | jq -r ".[$IDX].id")
+        CUR_SNI=$(echo "$CLIENTS_JSON" | jq -r ".[$IDX].sni // \"gateway.icloud.com\"")
+        
+        CUR_WARP="false"
+        if echo "$WARP_USERS" | grep -qx "$CUR_EMAIL"; then
+            CUR_WARP="true"
+        fi
+
+        while true; do
+            clear
+            echo -e "${CYAN}================================================================${NC}"
+            echo -e "${CYAN}               УПРАВЛЕНИЕ: $CUR_EMAIL                           ${NC}"
+            echo -e "${CYAN}----------------------------------------------------------------${NC}"
+            echo -e " [1] 🔑 Показать данные подключения (VLESS-ссылка и QR-код)"
+            echo -e " [2] 🔄 Изменить статус WARP ($(if [[ "$CUR_WARP" == "true" ]]; then echo "ВКЛ ➔ ВЫКЛ"; else echo "ВЫКЛ ➔ ВКЛ"; fi))"
+            echo -e " [3] ❌ Удалить пользователя"
+            echo -e "${CYAN}----------------------------------------------------------------${NC}"
+            echo -e " [0] ← Назад к списку пользователей"
+            echo -e "${CYAN}================================================================${NC}"
+
+            read -p "Выберите действие [0-3]: " SUB_ACTION
+
+            case "$SUB_ACTION" in
+                1)
+                    clear
+                    VLESS_URI="vless://${CUR_UUID}@${SERVER_IP}:${XRAY_PORT}?security=reality&path=%2F&host=&mode=auto&sni=${CUR_SNI}&fp=chrome&pbk=${PUBLIC_KEY}&sid=${SHORT_ID}&spx=%2F&type=xhttp&encryption=none#${CUR_EMAIL}"
+                    echo -e "${CYAN}================================================================${NC}"
+                    echo -e "${CYAN}               ДАННЫЕ ПОДКЛЮЧЕНИЯ: $CUR_EMAIL                  ${NC}"
+                    echo -e "${CYAN}================================================================${NC}"
+                    echo -e "Имя:        ${CYAN}$CUR_EMAIL${NC}"
+                    echo -e "UUID:       ${CYAN}$CUR_UUID${NC}"
+                    echo -e "Режим WARP: $(if [[ "$CUR_WARP" == "true" ]]; then echo -e "${GREEN}ВКЛЮЧЕН${NC}"; else echo -e "${YELLOW}ВЫКЛЮЧЕН (Direct)${NC}"; fi)"
+                    echo -e "Транспорт:  ${CYAN}xHTTP (auto)${NC}"
+                    echo -e "${CYAN}----------------------------------------------------------------${NC}"
+                    echo -e "${YELLOW}VLESS URI:${NC}\n${CYAN}${VLESS_URI}${NC}\n"
+                    echo -e "${YELLOW}QR-код для подключения:${NC}\n"
+                    if command -v qrencode >/dev/null 2>&1; then
+                        qrencode -t ANSIUTF8 "${VLESS_URI}" || true
+                    fi
+                    echo -e "\n${CYAN}================================================================${NC}"
+                    read -p "Нажмите Enter для возврата..."
+                    ;;
+                2)
                     TMP_CFG=$(mktemp --suffix=.json)
-                    jq --arg email "$CUR_EMAIL" --argjson warp "$NEW_WARP_STATE" '
-                        (.inbounds[0].settings.clients[] | select(.email == $email).warp) = $warp
-                    ' "$CONFIG_FILE" > "$TMP_CFG"
-                    if [[ "$NEW_WARP_STATE" == "true" ]]; then
+                    if [[ "$CUR_WARP" == "true" ]]; then
+                        jq --arg email "$CUR_EMAIL" '
+                            (.routing.rules[] | select(.outboundTag == "warp").user) |= map(select(. != $email))
+                        ' "$CONFIG_FILE" > "$TMP_CFG"
+                        CUR_WARP="false"
+                        echo -e "${GREEN}✓ WARP отключен для '$CUR_EMAIL'${NC}"
+                    else
                         jq --arg email "$CUR_EMAIL" '
                             (.routing.rules[] | select(.outboundTag == "warp").user) += [$email] |
                             (.routing.rules[] | select(.outboundTag == "warp").user) |= unique
-                        ' "$TMP_CFG" > "$TMP_CFG.2" && mv "$TMP_CFG.2" "$TMP_CFG"
-                    else
-                            (.routing.rules[] | select(.outboundTag == "warp").user) -= [$email]
+                        ' "$CONFIG_FILE" > "$TMP_CFG"
+                        CUR_WARP="true"
+                        echo -e "${GREEN}✓ WARP включен для '$CUR_EMAIL'${NC}"
                     fi
                     mv "$TMP_CFG" "$CONFIG_FILE" && chmod 644 "$CONFIG_FILE"
                     systemctl restart xray
-                    echo -e "${GREEN}✓ Статус WARP успешно обновлен!${NC}"
-                    sleep 1.5
+                    sleep 1
+                    ;;
+                3)
+                    echo -e "\n${RED}⚠️  ВНИМАНИЕ! Вы собираетесь удалить пользователя '$CUR_EMAIL'.${NC}"
+                    read -p "Вы абсолютно уверены? [y/N]: " CONFIRM_DEL
+                    if [[ "$CONFIRM_DEL" =~ ^[yYдД]$ ]]; then
+                        TMP_CFG=$(mktemp --suffix=.json)
+                        jq --arg email "$CUR_EMAIL" '
+                            (.inbounds[0].settings.clients) |= map(select(.email != $email)) |
+                            (.routing.rules[] | select(.outboundTag == "warp").user)? |= map(select(. != $email))
+                        ' "$CONFIG_FILE" > "$TMP_CFG"
+                        mv "$TMP_CFG" "$CONFIG_FILE" && chmod 644 "$CONFIG_FILE"
+                        systemctl restart xray
+                        echo -e "${GREEN}✓ Пользователь '$CUR_EMAIL' успешно удален.${NC}"
+                        echo "[$(date '+%Y-%m-%d %H:%M:%S')] [INFO] [CLIENT] Пользователь '$CUR_EMAIL' удален" >> "$LOG_FILE"
+                        sleep 1.5
+                        break
+                    fi
+                    ;;
+                0)
                     break
-            3)
-                echo -e "\n${RED}⚠️  ВНИМАНИЕ! Вы собираетесь удалить пользователя '$CUR_EMAIL'.${NC}"
-                read -p "Вы абсолютно уверены? [y/N]: " CONFIRM_DEL
-                if [[ "$CONFIRM_DEL" =~ ^[yYдД]$ ]]; then
-                    jq --arg email "$CUR_EMAIL" '
-                        .inbounds[0].settings.clients |= map(select(.email != $email)) |
-                        (.routing.rules[] | select(.outboundTag == "warp").user) -= [$email]
-                    echo -e "${GREEN}✓ Пользователь '$CUR_EMAIL' удален.${NC}"
-            0|*)
-        esac
+                    ;;
+                *)
+                    echo -e "${RED}Неверный выбор.${NC}"
+                    sleep 1
+                    ;;
+            esac
+        done
+    else
+        echo -e "${RED}Неверный номер.${NC}"
+        sleep 1
+    fi
 done

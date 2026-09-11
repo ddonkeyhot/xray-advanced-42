@@ -1,3 +1,14 @@
+#!/bin/bash
+set -u
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+CONFIG_FILE="/usr/local/etc/xray/config.json"
 REALITY_ENV="/usr/local/etc/xray/reality.env"
 SNI_FILE="/usr/local/etc/xray/sni_pool.txt"
 LOG_FILE="/var/log/xray-advanced-42/health.log"
@@ -20,7 +31,6 @@ XRAY_PORT=$(jq -r '.inbounds[0].port // 443' "$CONFIG_FILE")
 XHTTP_PATH=$(jq -r '.inbounds[0].streamSettings.xhttpSettings.path // "/download"' "$CONFIG_FILE")
 
 while true; do
-
     clear
     echo -e "${CYAN}================================================================${NC}"
     echo -e "${CYAN}            МАСТЕР СОЗДАНИЯ НОВОГО ПОЛЬЗОВАТЕЛЯ                 ${NC}"
@@ -45,15 +55,15 @@ while true; do
     echo -e "WARP скрывает реальный IP сервера и открывает ChatGPT/стриминги."
     echo -e "По умолчанию рекомендуется ${GREEN}ДА (Y)${NC} для доступа к заблокированным сайтам."
     read -p "Включить WARP для '$USER_NAME'? [Y/n] (по умолчанию Y): " WARP_INPUT
+    
     SELECTED_SNI="gateway.icloud.com"
     WARP_ENABLED=true
     if [[ "$WARP_INPUT" =~ ^[nNнН]$ ]]; then
         WARP_ENABLED=false
     fi
 
-
     NEW_UUID=$(/usr/local/bin/xray uuid)
-
+    
     CLIENT_OBJ=$(jq -n \
         --arg id "$NEW_UUID" \
         --arg email "$USER_NAME" \
@@ -73,9 +83,9 @@ while true; do
 
     TEST_OUT=$(/usr/local/bin/xray -test -config "$TMP_CFG" 2>&1)
     if echo "$TEST_OUT" | grep -q "Configuration OK"; then
-
         mv "$TMP_CFG" "$CONFIG_FILE" && chmod 644 "$CONFIG_FILE"
         systemctl restart xray
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] [INFO] [CLIENT] Создан пользователь '$USER_NAME' (UUID: $NEW_UUID, WARP: $WARP_ENABLED, SNI: $SELECTED_SNI)" >> "$LOG_FILE"
     else
         echo -e "${RED}[ОШИБКА] Сгенерированный конфиг не прошел валидацию Xray! Отмена.${NC}"
         echo -e "${YELLOW}Детали ошибки:${NC}\n$TEST_OUT"
@@ -84,9 +94,15 @@ while true; do
         break
     fi
 
-
     VLESS_URI="vless://${NEW_UUID}@${SERVER_IP}:${XRAY_PORT}?security=reality&path=%2F&host=&mode=auto&sni=${SELECTED_SNI}&fp=chrome&pbk=${PUBLIC_KEY}&sid=${SHORT_ID}&spx=%2F&type=xhttp&encryption=none#${USER_NAME}"
 
+    clear
+    echo -e "${GREEN}================================================================${NC}"
+    echo -e "${GREEN}       ПОЛЬЗОВАТЕЛЬ '$USER_NAME' УСПЕШНО СОЗДАН!                ${NC}"
+    echo -e "${GREEN}================================================================${NC}"
+    echo -e "Имя:        ${CYAN}$USER_NAME${NC}"
+    echo -e "UUID:       ${CYAN}$NEW_UUID${NC}"
+    echo -e "Режим WARP: $(if [[ "$WARP_ENABLED" = true ]]; then echo -e "${GREEN}ВКЛЮЧЕН${NC}"; else echo -e "${YELLOW}ВЫКЛЮЧЕН (Direct)${NC}"; fi)"
     echo -e "Транспорт:  ${CYAN}xHTTP (auto)${NC}"
     echo -e "${CYAN}----------------------------------------------------------------${NC}"
     echo -e "${YELLOW}Строка подключения (VLESS URI):${NC}"
