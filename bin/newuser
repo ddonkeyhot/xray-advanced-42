@@ -111,7 +111,7 @@ while true; do
         break
     fi
 
-    VLESS_URI="vless://${NEW_UUID}@${SERVER_IP}:${XRAY_PORT}?security=reality&type=splithttp&host=${SELECTED_SNI}&path=${XHTTP_PATH}&mode=packet-up&sni=${SELECTED_SNI}&fp=chrome&pbk=${PUBLIC_KEY}&sid=${SHORT_ID}#${USER_NAME}"
+    VLESS_URI="vless://${NEW_UUID}@${SERVER_IP}:${XRAY_PORT}?security=reality&type=xhttp&path=${XHTTP_PATH}&mode=packet-up&sni=${SELECTED_SNI}&fp=chrome&pbk=${PUBLIC_KEY}&sid=${SHORT_ID}#${USER_NAME}"
 
     clear
     echo -e "${GREEN}================================================================${NC}"
