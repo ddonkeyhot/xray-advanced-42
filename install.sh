@@ -217,6 +217,7 @@ WARP_PRIVATE_KEY=""
 WARP_IPV4=""
 WARP_IPV6=""
 WARP_PEER_PUBKEY="bmXOC+F1FxEMF9dyiK2H5/1SUtzHZsVoW++ZKgukR2g="
+WARP_RESERVED="[0,0,0]"
 
 if [[ -n "${MANUAL_WARP_PRIV:-}" && -n "${MANUAL_WARP_IPV4:-}" && -n "${MANUAL_WARP_IPV6:-}" ]]; then
     WARP_PRIVATE_KEY="${MANUAL_WARP_PRIV:-}"
@@ -239,6 +240,11 @@ if echo "$WARP_RESP" | jq -e '.id' >/dev/null 2>&1; then
     WARP_IPV4=$(echo "$WARP_RESP" | jq -r '.config.interface.addresses.v4')
     WARP_IPV6=$(echo "$WARP_RESP" | jq -r '.config.interface.addresses.v6')
     WARP_CONFIG_AVAILABLE=true
+    WARP_CLIENT_ID=$(echo "$WARP_RESP" | jq -r ".config.client_id // \"\"")
+    if [[ -n "$WARP_CLIENT_ID" ]]; then
+        RESERVED_BYTES=$(echo -n "$WARP_CLIENT_ID" | base64 -d | od -An -t u1 | tr -d "\n" | tr -s " " | sed "s/^ //; s/ /,/g" | sed "s/,$//")
+        WARP_RESERVED="[$RESERVED_BYTES]"
+    fi
     echo -e "${GREEN}[✓] Учетная запись Cloudflare WARP зарегистрирована (IPv4: $WARP_IPV4).${NC}"
     log_msg "INFO" "WARP" "WARP успешно зарегистрирован (IP: $WARP_IPV4)"
 else
@@ -348,6 +354,7 @@ if [[ "$WARP_CONFIG_AVAILABLE" = true ]]; then
         --arg pub "$WARP_PEER_PUBKEY" \
         --arg ip4 "$WARP_IPV4/32" \
         --arg ip6 "$WARP_IPV6/128" \
+        --argjson reserved "$WARP_RESERVED" \
         '{
           protocol: "wireguard",
           tag: "warp",
@@ -358,9 +365,11 @@ if [[ "$WARP_CONFIG_AVAILABLE" = true ]]; then
               {
                 publicKey: $pub,
                 endpoint: "162.159.192.1:2408",
-                keepAlive: 25
+                keepAlive: 25,
+                reserved: $reserved
               }
-            ]
+            ],
+            mtu: 1280
           }
         }')
     TMP_CFG=$(mktemp)
