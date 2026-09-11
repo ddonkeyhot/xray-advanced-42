@@ -27,14 +27,11 @@
 * **ОС**: Чистый Ubuntu 20.04/22.04/24.04 или Debian 11/12.
 * **Права**: `root` (или sudo).
 
-### Шаг 1. Клонирование и установка ядра
-Выполните эти 4 команды в терминале вашего сервера:
+### Шаг 1. Быстрая установка Xray
+Выполните эту команду в терминале вашего сервера (она скачает и запустит мастер установки):
 
 ```bash
-git clone https://github.com/ddonkeyhot/xray-advanced-42.git
-cd xray-advanced-42
-chmod +x *.sh bin/*
-sudo ./install.sh
+bash -c "$(curl -L https://raw.githubusercontent.com/ddonkeyhot/xray-advanced-42/main/install.sh)"
 ```
 
 Мастер установки автоматически:
@@ -45,10 +42,10 @@ sudo ./install.sh
 - Предложит создать первого пользователя.
 
 ### Шаг 2. (Опционально, но рекомендуется) Защита сервера
-Запустите скрипт харденинга, чтобы защитить сервер:
+Загрузите и запустите скрипт харденинга, чтобы защитить сервер:
 
 ```bash
-sudo ./secure.sh
+bash -c "$(curl -L https://raw.githubusercontent.com/ddonkeyhot/xray-advanced-42/main/secure.sh)"
 ```
 *Этот скрипт перенесет SSH на нестандартный порт (случайно сгенерированный или выбранный вами), отключит вход по паролю (оставив только ключи SSH), настроит фаервол (UFW) и включит защиту от подбора паролей (Fail2ban).*
 
@@ -89,18 +86,18 @@ xray
 Зайдите в `xray_menu` и выберите пункт `[5]`.
 Либо запустите:
 ```bash
-sudo ./install.sh --upgrade
+sudo install.sh --upgrade
 ```
 
 **Если вы хотите полностью удалить Xray с сервера:**
 Запустите установщик с флагом отката (потребуется подтверждение вводом слова RESTORE):
 ```bash
-sudo ./install.sh --restore
+bash -c "$(curl -L https://raw.githubusercontent.com/ddonkeyhot/xray-advanced-42/main/install.sh)" --restore
 ```
 
 **Если вы хотите откатить настройки безопасности (вернуть SSH на порт 22):**
 ```bash
-sudo ./secure.sh --restore
+bash -c "$(curl -L https://raw.githubusercontent.com/ddonkeyhot/xray-advanced-42/main/secure.sh)" --restore
 ```
 
 ---

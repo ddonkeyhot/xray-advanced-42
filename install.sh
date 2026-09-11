@@ -122,7 +122,7 @@ echo -e "  • Управление:  ${GREEN}Интерактивный TUI д�
 echo -e "${CYAN}================================================================${NC}\n"
 
 # Шаг 1: Системные пакеты
-echo -e "${BLUE}▶ [1/7] Установка системных зависимостей (curl, jq, qrencode, wireguard-tools, unzip, openssl)...${NC}"
+echo -e "${BLUE}▶ [1/7] Установка системных зависимостей...${NC}"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y >/dev/null 2>&1 || true
 apt-get install -y curl jq qrencode wireguard-tools git coreutils util-linux unzip openssl >/dev/null 2>&1
@@ -162,10 +162,19 @@ echo -e "\n${BLUE}▶ [4/7] Настройка криптографически�
 mkdir -p "$CONFIG_DIR"
 
 if [[ ! -f "$REALITY_ENV" ]]; then
-    KEY_PAIR=$(/usr/local/bin/xray x25519)
-    PRIVATE_KEY=$(echo "$KEY_PAIR" | grep -i 'Private key:' | awk '{print $3}')
-    PUBLIC_KEY=$(echo "$KEY_PAIR" | grep -i 'Public key:' | awk '{print $3}')
-    SHORT_ID=$(openssl rand -hex 8 || tr -dc 'a-f0-9' < /dev/urandom | head -c 16)
+    if ! KEY_PAIR=$(/usr/local/bin/xray x25519 2>&1); then
+        echo -e "${RED}[ОШИБКА] Команда xray x25519 завершилась с ошибкой:${NC}\n$KEY_PAIR"
+        exit 1
+    fi
+    # Отлавливаем ошибки grep через || true, чтобы скрипт не упал по set -e
+    PRIVATE_KEY=$(echo "$KEY_PAIR" | grep -i 'Private key:' | awk '{print $3}' || true)
+    PUBLIC_KEY=$(echo "$KEY_PAIR" | grep -i 'Public key:' | awk '{print $3}' || true)
+    SHORT_ID=$(openssl rand -hex 8 || tr -dc 'a-f0-9' < /dev/urandom | head -c 16) || true
+
+    if [[ -z "$PRIVATE_KEY" || -z "$PUBLIC_KEY" ]]; then
+        echo -e "${RED}[ОШИБКА] Не удалось распарсить ключи из вывода Xray:${NC}\n$KEY_PAIR"
+        exit 1
+    fi
 
     cat << ENV_EOF > "$REALITY_ENV"
 PRIVATE_KEY="$PRIVATE_KEY"
@@ -349,13 +358,20 @@ echo -e "${GREEN}[✓] Служба Xray запущена и добавлена 
 
 # Шаг 7: Установка CLI-утилит
 echo -e "\n${BLUE}▶ [7/7] Развертывание CLI-утилит в /usr/local/bin/...${NC}"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [[ -d "$SCRIPT_DIR/bin" ]]; then
-    cp -r "$SCRIPT_DIR/bin/"* /usr/local/bin/
-    chmod +x /usr/local/bin/*
-    ln -sf /usr/local/bin/xray_menu /usr/local/bin/xray || true
-    echo -e "${GREEN}[✓] Утилиты (xray_menu, userlist, newuser, show_problems, xray_update_geoip, xray_upgrade, xray_help) установлены.${NC}"
+# Если скрипт запущен локально из клонированного репозитория:
+if [[ -d "./bin" && -f "./bin/xray_menu" ]]; then
+    cp -r ./bin/* /usr/local/bin/
+# Если скрипт запущен удаленно через curl:
+else
+    echo -e "▶ Скачивание утилит из репозитория GitHub..."
+    TMP_BIN=$(mktemp -d)
+    curl -sL https://github.com/ddonkeyhot/xray-advanced-42/archive/refs/heads/main.tar.gz | tar -xz -C "$TMP_BIN" --strip-components=1
+    cp -r "$TMP_BIN/bin/"* /usr/local/bin/
+    rm -rf "$TMP_BIN"
 fi
+chmod +x /usr/local/bin/*
+ln -sf /usr/local/bin/xray_menu /usr/local/bin/xray || true
+echo -e "${GREEN}[✓] Утилиты (xray_menu, userlist, newuser, show_problems, xray_update_geoip, xray_upgrade, xray_help) установлены.${NC}"
 
 log_msg "INFO" "INSTALL" "Сервер успешно установлен и запущен на порту 443."
 
