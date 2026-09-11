@@ -22,7 +22,6 @@ source "$REALITY_ENV"
 SERVER_IP=$(curl -4 -s --connect-timeout 3 icanhazip.com || curl -4 -s --connect-timeout 3 api.ipify.org || echo "YOUR_SERVER_IP")
 XRAY_PORT=$(jq -r '.inbounds[0].port // 443' "$CONFIG_FILE")
 XHTTP_PATH=$(jq -r '.inbounds[0].streamSettings.xhttpSettings.path // "/download"' "$CONFIG_FILE")
-ENCODED_PATH=$(echo -n "$XHTTP_PATH" | jq -sRr @uri)
 
 while true; do
     clear
@@ -105,7 +104,7 @@ while true; do
         case "$SUB_ACTION" in
             1)
                 clear
-                VLESS_URI="vless://${CUR_UUID}@${SERVER_IP}:${XRAY_PORT}?security=reality&type=xhttp&path=${ENCODED_PATH}&mode=packet-up&sni=${CUR_SNI}&fp=chrome&pbk=${PUBLIC_KEY}&sid=${SHORT_ID}#${CUR_EMAIL}"
+                VLESS_URI="vless://${CUR_UUID}@${SERVER_IP}:${XRAY_PORT}?security=reality&type=xhttp&path=${XHTTP_PATH}&mode=packet-up&sni=${CUR_SNI}&fp=chrome&pbk=${PUBLIC_KEY}&sid=${SHORT_ID}#${CUR_EMAIL}"
                 echo -e "${CYAN}================================================================${NC}"
                 echo -e "${CYAN}               ДАННЫЕ ПОДКЛЮЧЕНИЯ: $CUR_EMAIL                  ${NC}"
                 echo -e "${CYAN}================================================================${NC}"
@@ -166,7 +165,7 @@ while true; do
                     sleep 1
                     clear
                     CUR_SNI="$CHOSEN_SNI"
-                    VLESS_URI="vless://${CUR_UUID}@${SERVER_IP}:${XRAY_PORT}?security=reality&type=xhttp&path=${ENCODED_PATH}&mode=packet-up&sni=${CUR_SNI}&fp=chrome&pbk=${PUBLIC_KEY}&sid=${SHORT_ID}#${CUR_EMAIL}"
+                    VLESS_URI="vless://${CUR_UUID}@${SERVER_IP}:${XRAY_PORT}?security=reality&type=xhttp&path=${XHTTP_PATH}&mode=packet-up&sni=${CUR_SNI}&fp=chrome&pbk=${PUBLIC_KEY}&sid=${SHORT_ID}#${CUR_EMAIL}"
                     echo -e "${CYAN}================================================================${NC}"
                     echo -e "${CYAN}               ДАННЫЕ ПОДКЛЮЧЕНИЯ: $CUR_EMAIL                  ${NC}"
                     echo -e "${CYAN}================================================================${NC}"

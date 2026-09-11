@@ -33,7 +33,6 @@ fi
 SERVER_IP=$(curl -4 -s --connect-timeout 3 icanhazip.com || curl -4 -s --connect-timeout 3 api.ipify.org || echo "YOUR_SERVER_IP")
 XRAY_PORT=$(jq -r '.inbounds[0].port // 443' "$CONFIG_FILE")
 XHTTP_PATH=$(jq -r '.inbounds[0].streamSettings.xhttpSettings.path // "/download"' "$CONFIG_FILE")
-ENCODED_PATH=$(echo -n "$XHTTP_PATH" | jq -sRr @uri)
 
 while true; do
     clear
@@ -114,7 +113,7 @@ while true; do
         break
     fi
 
-    VLESS_URI="vless://${NEW_UUID}@${SERVER_IP}:${XRAY_PORT}?security=reality&type=xhttp&path=${ENCODED_PATH}&mode=packet-up&sni=${SELECTED_SNI}&fp=chrome&pbk=${PUBLIC_KEY}&sid=${SHORT_ID}#${USER_NAME}"
+    VLESS_URI="vless://${NEW_UUID}@${SERVER_IP}:${XRAY_PORT}?security=reality&type=xhttp&path=${XHTTP_PATH}&mode=packet-up&sni=${SELECTED_SNI}&fp=chrome&pbk=${PUBLIC_KEY}&sid=${SHORT_ID}#${USER_NAME}"
 
     clear
     echo -e "${GREEN}================================================================${NC}"
