@@ -274,20 +274,14 @@ cat << CONF_EOF > "$CONFIG_FILE"
         "decryption": "none"
       },
       "streamSettings": {
-        "network": "xhttp",
-        "xhttpSettings": {
-          "path": "/download",
-          "mode": "packet-up"
-        },
+        "network": "tcp",
         "security": "reality",
         "realitySettings": {
           "show": false,
           "dest": "gateway.icloud.com:443",
           "xver": 0,
           "serverNames": [
-            "gateway.icloud.com",
-            "swdist.apple.com",
-            "appldnld.apple.com"
+            "gateway.icloud.com"
           ],
           "privateKey": "$PRIVATE_KEY",
           "shortIds": [
