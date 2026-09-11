@@ -53,7 +53,7 @@ case "$UPG_CHOICE" in
     1)
         backup_config
         echo -e "\n${BLUE}▶ Обновление ядра...${NC}"
-        bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install --reinstall >/dev/null 2>&1
+        bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install >/dev/null 2>&1 || true
         echo -e "\n${BLUE}▶ Обновление баз GeoIP...${NC}"
         xray_update_geoip
         echo -e "\n${BLUE}▶ Обновление утилит...${NC}"
@@ -70,7 +70,7 @@ case "$UPG_CHOICE" in
     2)
         backup_config
         echo -e "\n${BLUE}▶ Обновление ядра Xray-core...${NC}"
-        bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install --reinstall >/dev/null 2>&1
+        bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install >/dev/null 2>&1 || true
         echo -e "${GREEN}✓ Ядро Xray-core обновлено.${NC}"
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] [INFO] [UPGRADE] Ядро Xray обновлено" >> "$LOG_FILE"
         systemctl restart xray
