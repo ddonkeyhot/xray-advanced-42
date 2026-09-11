@@ -1,0 +1,46 @@
+#!/bin/bash
+set -euo pipefail
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+while true; do
+    clear
+    echo -e "${CYAN}================================================================${NC}"
+    echo -e "${CYAN}           XRAY ADVANCED 42 — ГЛАВНОЕ МЕНЮ                      ${NC}"
+    echo -e "${CYAN}================================================================${NC}"
+    echo -e " [1] 👥 Список пользователей и управление (${GREEN}userlist${NC})"
+    echo -e " [2] ➕ Создать нового пользователя (${GREEN}newuser${NC})"
+    echo -e " [3] 🩺 Диагностика состояния и журнал здоровья (${GREEN}show_problems${NC})"
+    echo -e " [4] 🌐 Обновить базы GeoIP / GeoSite вручную (${GREEN}xray_update_geoip${NC})"
+    echo -e " [5] 🔄 Проверить и установить обновления системы (${GREEN}xray_upgrade${NC})"
+    echo -e " [6] ⚡ Перезапустить службу Xray"
+    echo -e " [7] 📖 Справка по командам (${GREEN}xray_help${NC})"
+    echo -e "${CYAN}----------------------------------------------------------------${NC}"
+    echo -e " [0] Выход из меню"
+    echo -e "${CYAN}================================================================${NC}"
+    read -p "Выберите действие [0-7]: " MAIN_CHOICE
+
+    case "$MAIN_CHOICE" in
+        1) userlist ;;
+        2) newuser ;;
+        3) show_problems ;;
+        4) xray_update_geoip; read -p "Нажмите Enter для продолжения..." ;;
+        5) xray_upgrade ;;
+        6)
+            echo -e "\n${BLUE}Перезапуск службы Xray...${NC}"
+            systemctl restart xray
+            echo -e "${GREEN}✓ Служба перезапущена!${NC}"
+            sleep 1.5
+            ;;
+        7) xray_help; read -p "Нажмите Enter для продолжения..." ;;
+        0|*)
+            clear
+            exit 0
+            ;;
+    esac
+done
