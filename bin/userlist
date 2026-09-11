@@ -161,8 +161,22 @@ while true; do
                         (.inbounds[0].settings.clients[] | select(.email == $email).sni) = $sni
                     ' "$CONFIG_FILE" > "$TMP_CFG"
                     mv "$TMP_CFG" "$CONFIG_FILE" && chmod 644 "$CONFIG_FILE"
+                    systemctl restart xray
                     echo -e "${GREEN}✓ SNI успешно обновлен на $CHOSEN_SNI!${NC}"
-                    sleep 1.5
+                    sleep 1
+                    clear
+                    CUR_SNI="$CHOSEN_SNI"
+                    VLESS_URI="vless://${CUR_UUID}@${SERVER_IP}:${XRAY_PORT}?security=reality&type=xhttp&path=${ENCODED_PATH}&mode=packet-up&sni=${CUR_SNI}&fp=chrome&pbk=${PUBLIC_KEY}&sid=${SHORT_ID}#${CUR_EMAIL}"
+                    echo -e "${CYAN}================================================================${NC}"
+                    echo -e "${CYAN}               ДАННЫЕ ПОДКЛЮЧЕНИЯ: $CUR_EMAIL                  ${NC}"
+                    echo -e "${CYAN}================================================================${NC}"
+                    echo -e "${YELLOW}VLESS URI:${NC}\n${CYAN}${VLESS_URI}${NC}\n"
+                    echo -e "${YELLOW}QR-код для подключения:${NC}\n"
+                    if command -v qrencode >/dev/null 2>&1; then
+                        qrencode -t ANSIUTF8 "${VLESS_URI}" || true
+                    fi
+                    echo -e "\n${CYAN}================================================================${NC}"
+                    read -p "Нажмите Enter для возврата к списку пользователей..."
                     break
                 fi
                 ;;
