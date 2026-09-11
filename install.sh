@@ -211,11 +211,6 @@ gateway.icloud.com
 swdist.apple.com
 appldnld.apple.com
 configuration.apple.com
-www.microsoft.com
-update.microsoft.com
-speed.cloudflare.com
-s0.awsstatic.com
-addons.mozilla.org
 SNI_EOF
 
 # Шаг 5: Регистрация Cloudflare WARP
@@ -293,12 +288,8 @@ cat << CONF_EOF > "$CONFIG_FILE"
             "gateway.icloud.com",
             "swdist.apple.com",
             "appldnld.apple.com",
-            "configuration.apple.com"
-www.microsoft.com
-update.microsoft.com
-speed.cloudflare.com
-s0.awsstatic.com
-addons.mozilla.org
+            "www.microsoft.com",
+            "s0.awsstatic.com"
           ],
           "privateKey": "$PRIVATE_KEY",
           "shortIds": [

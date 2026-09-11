@@ -25,7 +25,8 @@ if [[ ! -f "$SNI_FILE" ]]; then
 gateway.icloud.com
 swdist.apple.com
 appldnld.apple.com
-configuration.apple.com
+www.microsoft.com
+s0.awsstatic.com
 SNI_EOF
 fi
 
