@@ -122,16 +122,23 @@ echo -e "  • Управление:  ${GREEN}Интерактивный TUI д�
 echo -e "${CYAN}================================================================${NC}\n"
 
 # Шаг 1: Системные пакеты
-echo -e "${BLUE}▶ [1/7] Установка системных зависимостей (curl, jq, qrencode, wireguard-tools)...${NC}"
+echo -e "${BLUE}▶ [1/7] Установка системных зависимостей (curl, jq, qrencode, wireguard-tools, unzip, openssl)...${NC}"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y >/dev/null 2>&1 || true
-apt-get install -y curl jq qrencode wireguard-tools git coreutils util-linux >/dev/null 2>&1
+apt-get install -y curl jq qrencode wireguard-tools git coreutils util-linux unzip openssl >/dev/null 2>&1
 echo -e "${GREEN}[✓] Зависимости установлены.${NC}"
 
 # Шаг 2: Установка Xray-core
 echo -e "\n${BLUE}▶ [2/7] Установка ядра Xray-core последней версии...${NC}"
-bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install >/dev/null 2>&1
-echo -e "${GREEN}[✓] Ядро Xray-core успешно установлено ($(xray version | head -n 1 | awk '{print $2}')).${NC}"
+if ! bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" - install; then
+    echo -e "${RED}[ОШИБКА] Не удалось установить Xray-core. Проверьте вывод выше.${NC}"
+    exit 1
+fi
+if [[ ! -f /usr/local/bin/xray ]]; then
+    echo -e "${RED}[ОШИБКА] Исполняемый файл /usr/local/bin/xray не найден после установки.${NC}"
+    exit 1
+fi
+echo -e "${GREEN}[✓] Ядро Xray-core успешно установлено ($(/usr/local/bin/xray version | head -n 1 | awk '{print $2}')).${NC}"
 
 # Шаг 3: Скачивание баз Loyalsoldier
 echo -e "\n${BLUE}▶ [3/7] Загрузка баз маршрутизации GeoIP и GeoSite (Loyalsoldier)...${NC}"
@@ -155,10 +162,10 @@ echo -e "\n${BLUE}▶ [4/7] Настройка криптографически�
 mkdir -p "$CONFIG_DIR"
 
 if [[ ! -f "$REALITY_ENV" ]]; then
-    KEY_PAIR=$(xray x25519)
+    KEY_PAIR=$(/usr/local/bin/xray x25519)
     PRIVATE_KEY=$(echo "$KEY_PAIR" | grep -i 'Private key:' | awk '{print $3}')
     PUBLIC_KEY=$(echo "$KEY_PAIR" | grep -i 'Public key:' | awk '{print $3}')
-    SHORT_ID=$(openssl rand -hex 8)
+    SHORT_ID=$(openssl rand -hex 8 || tr -dc 'a-f0-9' < /dev/urandom | head -c 16)
 
     cat << ENV_EOF > "$REALITY_ENV"
 PRIVATE_KEY="$PRIVATE_KEY"
@@ -331,7 +338,7 @@ if [[ "$WARP_CONFIG_AVAILABLE" = true ]]; then
     jq --argjson warp "$WARP_OUTBOUND" '.outbounds += [$warp]' "$CONFIG_FILE" > "$TMP_CFG" && mv "$TMP_CFG" "$CONFIG_FILE"
 fi
 
-if ! xray -test -config "$CONFIG_FILE"; then
+if ! /usr/local/bin/xray -test -config "$CONFIG_FILE"; then
     echo -e "${RED}[ОШИБКА] Конфигурация Xray не прошла проверку синтаксиса!${NC}"
     exit 1
 fi

@@ -79,7 +79,7 @@ while true; do
         SELECTED_SNI="${SNI_LIST[$RANDOM_IDX]}"
     fi
 
-    NEW_UUID=$(xray uuid)
+    NEW_UUID=$(/usr/local/bin/xray uuid)
 
     CLIENT_OBJ=$(jq -n \
         --arg id "$NEW_UUID" \
@@ -98,7 +98,7 @@ while true; do
         ' "$TMP_CFG" > "$TMP_CFG.2" && mv "$TMP_CFG.2" "$TMP_CFG"
     fi
 
-    if xray -test -config "$TMP_CFG" >/dev/null 2>&1; then
+    if /usr/local/bin/xray -test -config "$TMP_CFG" >/dev/null 2>&1; then
         mv "$TMP_CFG" "$CONFIG_FILE"
         systemctl restart xray
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] [INFO] [CLIENT] Создан пользователь '$USER_NAME' (UUID: $NEW_UUID, WARP: $WARP_ENABLED, SNI: $SELECTED_SNI)" >> "$LOG_FILE"

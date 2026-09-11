@@ -28,12 +28,12 @@ fi
 
 # 2. Проверка валидности JSON конфигурации
 echo -n "2. Синтаксис config.json: "
-if xray -test -config "$CONFIG_FILE" >/dev/null 2>&1; then
+if /usr/local/bin/xray -test -config "$CONFIG_FILE" >/dev/null 2>&1; then
     echo -e "${GREEN}ИДЕАЛЕН (passed)${NC}"
 else
     echo -e "${RED}НАЙДЕНЫ ОШИБКИ${NC}"
     echo -e "   ${YELLOW}▶ Детали ошибки:${NC}"
-    xray -test -config "$CONFIG_FILE" 2>&1 | head -n 3 | sed 's/^/      /'
+    /usr/local/bin/xray -test -config "$CONFIG_FILE" 2>&1 | head -n 3 | sed 's/^/      /'
 fi
 
 # 3. Проверка порта (443)

@@ -19,7 +19,7 @@ echo -e "${CYAN}================================================================
 echo -e "Опрашиваю репозитории GitHub...\n"
 
 # 1. Версия ядра Xray
-CUR_CORE=$(xray version | head -n 1 | awk '{print $2}' || echo "N/A")
+CUR_CORE=$(/usr/local/bin/xray version | head -n 1 | awk '{print $2}' || echo "N/A")
 NEW_CORE=$(curl -s "https://api.github.com/repos/XTLS/Xray-core/releases/latest" | jq -r '.tag_name' || echo "N/A")
 
 # 2. Версия скриптов (читаем из последнего коммита GitHub, локально не храним версию, просто показываем возможность)
