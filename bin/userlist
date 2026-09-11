@@ -104,7 +104,7 @@ while true; do
         case "$SUB_ACTION" in
             1)
                 clear
-                VLESS_URI="vless://${CUR_UUID}@${SERVER_IP}:${XRAY_PORT}?security=reality&type=xhttp&path=${XHTTP_PATH}&mode=packet-up&sni=${CUR_SNI}&fp=chrome&pbk=${PUBLIC_KEY}&sid=${SHORT_ID}#${CUR_EMAIL}"
+                VLESS_URI="vless://${CUR_UUID}@${SERVER_IP}:${XRAY_PORT}?security=reality&type=splithttp&host=${CUR_SNI}&path=${XHTTP_PATH}&mode=packet-up&sni=${CUR_SNI}&fp=chrome&pbk=${PUBLIC_KEY}&sid=${SHORT_ID}#${CUR_EMAIL}"
                 echo -e "${CYAN}================================================================${NC}"
                 echo -e "${CYAN}               ДАННЫЕ ПОДКЛЮЧЕНИЯ: $CUR_EMAIL                  ${NC}"
                 echo -e "${CYAN}================================================================${NC}"
@@ -165,7 +165,7 @@ while true; do
                     sleep 1
                     clear
                     CUR_SNI="$CHOSEN_SNI"
-                    VLESS_URI="vless://${CUR_UUID}@${SERVER_IP}:${XRAY_PORT}?security=reality&type=xhttp&path=${XHTTP_PATH}&mode=packet-up&sni=${CUR_SNI}&fp=chrome&pbk=${PUBLIC_KEY}&sid=${SHORT_ID}#${CUR_EMAIL}"
+                    VLESS_URI="vless://${CUR_UUID}@${SERVER_IP}:${XRAY_PORT}?security=reality&type=splithttp&host=${CUR_SNI}&path=${XHTTP_PATH}&mode=packet-up&sni=${CUR_SNI}&fp=chrome&pbk=${PUBLIC_KEY}&sid=${SHORT_ID}#${CUR_EMAIL}"
                     echo -e "${CYAN}================================================================${NC}"
                     echo -e "${CYAN}               ДАННЫЕ ПОДКЛЮЧЕНИЯ: $CUR_EMAIL                  ${NC}"
                     echo -e "${CYAN}================================================================${NC}"
