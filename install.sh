@@ -217,6 +217,14 @@ WARP_IPV4=""
 WARP_IPV6=""
 WARP_PEER_PUBKEY="bmXOC+F1FxEMF9dyiK2H5/1SUtzHZsVoW++ZKgukR2g="
 
+if [[ -n "$MANUAL_WARP_PRIV" && -n "$MANUAL_WARP_IPV4" && -n "$MANUAL_WARP_IPV6" ]]; then
+    WARP_PRIVATE_KEY="$MANUAL_WARP_PRIV"
+    WARP_IPV4="$MANUAL_WARP_IPV4"
+    WARP_IPV6="$MANUAL_WARP_IPV6"
+    WARP_CONFIG_AVAILABLE=true
+    echo -e "${GREEN}[✓] Используются переданные вручную настройки WARP (IPv4: $WARP_IPV4).${NC}"
+else
+
 WARP_LOCAL_PRIV=$(wg genkey)
 WARP_LOCAL_PUB=$(echo "$WARP_LOCAL_PRIV" | wg pubkey)
 
@@ -235,6 +243,8 @@ if echo "$WARP_RESP" | jq -e '.result.id' >/dev/null 2>&1; then
 else
     echo -e "${YELLOW}[!] Не удалось связаться с API (таймаут). Сервер продолжит работу в режиме Direct.${NC}"
     log_msg "WARN" "WARP" "Таймаут обращения к Cloudflare API. Активирован режим Direct."
+fi
+
 fi
 
 # Шаг 6: Генерация config.json
