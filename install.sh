@@ -143,7 +143,7 @@ echo -e "${GREEN}[✓] Зависимости установлены.${NC}"
 
 # Шаг 2: Установка Xray-core
 echo -e "\n${BLUE}▶ [2/7] Установка ядра Xray-core последней версии...${NC}"
-if ! bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" - install; then
+if ! bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install --reinstall; then
     echo -e "${RED}[ОШИБКА] Не удалось установить Xray-core. Проверьте вывод выше.${NC}"
     exit 1
 fi
