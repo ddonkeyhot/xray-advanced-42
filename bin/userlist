@@ -140,7 +140,7 @@ while true; do
                             (.routing.rules[] | select(.outboundTag == "warp").user) -= [$email]
                         ' "$TMP_CFG" > "$TMP_CFG.2" && mv "$TMP_CFG.2" "$TMP_CFG"
                     fi
-                    mv "$TMP_CFG" "$CONFIG_FILE"
+                    mv "$TMP_CFG" "$CONFIG_FILE" && chmod 644 "$CONFIG_FILE"
                     systemctl restart xray
                     echo -e "${GREEN}✓ Статус WARP успешно обновлен!${NC}"
                     sleep 1.5
@@ -160,7 +160,7 @@ while true; do
                     jq --arg email "$CUR_EMAIL" --arg sni "$CHOSEN_SNI" '
                         (.inbounds[0].settings.clients[] | select(.email == $email).sni) = $sni
                     ' "$CONFIG_FILE" > "$TMP_CFG"
-                    mv "$TMP_CFG" "$CONFIG_FILE"
+                    mv "$TMP_CFG" "$CONFIG_FILE" && chmod 644 "$CONFIG_FILE"
                     echo -e "${GREEN}✓ SNI успешно обновлен на $CHOSEN_SNI!${NC}"
                     sleep 1.5
                     break
@@ -175,7 +175,7 @@ while true; do
                         .inbounds[0].settings.clients |= map(select(.email != $email)) |
                         (.routing.rules[] | select(.outboundTag == "warp").user) -= [$email]
                     ' "$CONFIG_FILE" > "$TMP_CFG"
-                    mv "$TMP_CFG" "$CONFIG_FILE"
+                    mv "$TMP_CFG" "$CONFIG_FILE" && chmod 644 "$CONFIG_FILE"
                     systemctl restart xray
                     echo -e "${GREEN}✓ Пользователь '$CUR_EMAIL' удален.${NC}"
                     sleep 1.5

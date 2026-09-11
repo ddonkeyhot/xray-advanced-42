@@ -211,6 +211,11 @@ gateway.icloud.com
 swdist.apple.com
 appldnld.apple.com
 configuration.apple.com
+www.microsoft.com
+update.microsoft.com
+speed.cloudflare.com
+s0.awsstatic.com
+addons.mozilla.org
 SNI_EOF
 
 # Шаг 5: Регистрация Cloudflare WARP
@@ -289,6 +294,11 @@ cat << CONF_EOF > "$CONFIG_FILE"
             "swdist.apple.com",
             "appldnld.apple.com",
             "configuration.apple.com"
+www.microsoft.com
+update.microsoft.com
+speed.cloudflare.com
+s0.awsstatic.com
+addons.mozilla.org
           ],
           "privateKey": "$PRIVATE_KEY",
           "shortIds": [
@@ -383,6 +393,9 @@ if ! /usr/local/bin/xray -test -config "$CONFIG_FILE" 2>&1 | grep -q "Configurat
 fi
 
 systemctl enable xray
+chmod 644 "$CONFIG_FILE"
+chown nobody:nogroup "$CONFIG_FILE" || true
+
 systemctl restart xray
 echo -e "${GREEN}[✓] Служба Xray запущена и добавлена в автозагрузку.${NC}"
 

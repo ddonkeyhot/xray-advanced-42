@@ -102,7 +102,7 @@ while true; do
     TEST_OUT=$(/usr/local/bin/xray -test -config "$TMP_CFG" 2>&1)
     if echo "$TEST_OUT" | grep -q "Configuration OK"; then
 
-        mv "$TMP_CFG" "$CONFIG_FILE"
+        mv "$TMP_CFG" "$CONFIG_FILE" && chmod 644 "$CONFIG_FILE"
         systemctl restart xray
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] [INFO] [CLIENT] Создан пользователь '$USER_NAME' (UUID: $NEW_UUID, WARP: $WARP_ENABLED, SNI: $SELECTED_SNI)" >> "$LOG_FILE"
     else
