@@ -98,12 +98,15 @@ while true; do
         ' "$TMP_CFG" > "$TMP_CFG.2" && mv "$TMP_CFG.2" "$TMP_CFG"
     fi
 
-    if /usr/local/bin/xray run -test -config "$TMP_CFG" >/dev/null 2>&1; then
+    TEST_OUT=$(/usr/local/bin/xray -test -config "$TMP_CFG" 2>&1)
+    if echo "$TEST_OUT" | grep -q "Configuration OK"; then
+
         mv "$TMP_CFG" "$CONFIG_FILE"
         systemctl restart xray
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] [INFO] [CLIENT] Создан пользователь '$USER_NAME' (UUID: $NEW_UUID, WARP: $WARP_ENABLED, SNI: $SELECTED_SNI)" >> "$LOG_FILE"
     else
         echo -e "${RED}[ОШИБКА] Сгенерированный конфиг не прошел валидацию Xray! Отмена.${NC}"
+        echo -e "${YELLOW}Детали ошибки:${NC}\n$TEST_OUT"
         rm -f "$TMP_CFG"
         read -p "Нажмите Enter для возврата..."
         break

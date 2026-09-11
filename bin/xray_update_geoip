@@ -46,7 +46,7 @@ cp "$TMP_DIR/geoip.dat" "$TMP_DIR/share/xray/"
 cp "$TMP_DIR/geosite.dat" "$TMP_DIR/share/xray/"
 export XRAY_LOCATION_ASSET="$TMP_DIR/share/xray"
 
-TEST_OUT=$(timeout 5 $XRAY_BIN run -test -config "$CONFIG_FILE" 2>&1 || true)
+TEST_OUT=$(timeout 5 $XRAY_BIN -test -config "$CONFIG_FILE" 2>&1 || true)
 if ! echo "$TEST_OUT" | grep -q "Configuration OK"; then
     echo -e "${RED}[ОШИБКА] Xray не смог запуститься с новыми базами! Откат обновления.${NC}"
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] [ERROR] [GEOIP] Xray не прошел тест с новыми базами" >> "$LOG_FILE"

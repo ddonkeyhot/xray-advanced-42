@@ -29,7 +29,7 @@ LATEST_COMMIT=$(timeout 5 curl -s "https://api.github.com/repos/ddonkeyhot/xray-
 GEOIP_DATE=$(stat -c %y "/usr/local/share/xray/geoip.dat" 2>/dev/null | cut -d' ' -f1 || echo "N/A")
 
 printf " %-25s | %-15s | %-15s \n" "КОМПОНЕНТ" "ТЕКУЩАЯ ВЕРСИЯ" "ДОСТУПНО НА GITHUB"
-printf "----------------------------------------------------------------\n"
+printf -- "----------------------------------------------------------------\n"
 printf " %-25s | %-15s | %-15s \n" "Ядро Xray-core" "$CUR_CORE" "$NEW_CORE"
 printf " %-25s | %-15s | %-15s \n" "Утилиты (xray-advanced)" "Локальные" "Коммит $LATEST_COMMIT"
 printf " %-25s | %-15s | %-15s \n" "Базы GeoIP/GeoSite" "$GEOIP_DATE" "Ежедневный билд"
@@ -53,9 +53,9 @@ case "$UPG_CHOICE" in
     1)
         backup_config
         echo -e "\n${BLUE}▶ Обновление ядра...${NC}"
-        bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install >/dev/null 2>&1 || true
+        bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install || true
         echo -e "\n${BLUE}▶ Обновление баз GeoIP...${NC}"
-        xray_update_geoip >/dev/null 2>&1 || true
+        xray_update_geoip || true
         echo -e "\n${BLUE}▶ Обновление утилит...${NC}"
         TMP_BIN=$(mktemp -d)
         curl -sL https://github.com/ddonkeyhot/xray-advanced-42/archive/refs/heads/main.tar.gz | tar -xz -C "$TMP_BIN" --strip-components=1
@@ -65,16 +65,14 @@ case "$UPG_CHOICE" in
         echo -e "${GREEN}✓ Система полностью обновлена.${NC}"
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] [INFO] [UPGRADE] Выполнено полное обновление системы" >> "$LOG_FILE"
         systemctl restart xray
-        sleep 2
         ;;
     2)
         backup_config
         echo -e "\n${BLUE}▶ Обновление ядра Xray-core...${NC}"
-        bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install >/dev/null 2>&1 || true
+        bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install || true
         echo -e "${GREEN}✓ Ядро Xray-core обновлено.${NC}"
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] [INFO] [UPGRADE] Ядро Xray обновлено" >> "$LOG_FILE"
         systemctl restart xray
-        sleep 2
         ;;
     3)
         echo -e "\n${BLUE}▶ Скачивание утилит...${NC}"
@@ -85,13 +83,13 @@ case "$UPG_CHOICE" in
         rm -rf "$TMP_BIN"
         echo -e "${GREEN}✓ Утилиты обновлены.${NC}"
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] [INFO] [UPGRADE] Утилиты CLI обновлены" >> "$LOG_FILE"
-        sleep 2
         ;;
     4)
-        xray_update_geoip >/dev/null 2>&1 || true
-        sleep 2
+        xray_update_geoip || true
         ;;
     0|*)
         echo -e "${GREEN}Отмена.${NC}"
         ;;
 esac
+echo ""
+read -n 1 -s -r -p "Нажмите любую клавишу для возврата в меню..."

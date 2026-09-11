@@ -41,8 +41,12 @@ while true; do
         if [[ "$EMPTY_CHOICE" =~ ^[nNтТ]$ ]]; then
             newuser
             continue
-        else
+        elif [[ "$EMPTY_CHOICE" == "0" ]]; then
             break
+        else
+            echo -e "${RED}[ОШИБКА] Неверный выбор.${NC}"
+            sleep 1
+            continue
         fi
     fi
 
