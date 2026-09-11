@@ -21,7 +21,7 @@ fi
 source "$REALITY_ENV"
 SERVER_IP=$(curl -4 -s --connect-timeout 3 icanhazip.com || curl -4 -s --connect-timeout 3 api.ipify.org || echo "YOUR_SERVER_IP")
 XRAY_PORT=$(jq -r '.inbounds[0].port // 443' "$CONFIG_FILE")
-XHTTP_PATH=$(jq -r '.inbounds[0].streamSettings.xhttpSettings.path // "/download"' "$CONFIG_FILE")
+SPLITHTTP_PATH=$(jq -r '.inbounds[0].streamSettings.splithttpSettings.path // "/download"' "$CONFIG_FILE")
 
 while true; do
     clear
@@ -103,7 +103,7 @@ while true; do
         case "$SUB_ACTION" in
             1)
                 clear
-                VLESS_URI="vless://${CUR_UUID}@${SERVER_IP}:${XRAY_PORT}?security=reality&type=xhttp&path=%2Fdownload&host=gateway.icloud.com&mode=packet-up&sni=${CUR_SNI}&fp=chrome&pbk=${PUBLIC_KEY}&sid=${SHORT_ID}#${CUR_EMAIL}"
+                VLESS_URI="vless://${CUR_UUID}@${SERVER_IP}:${XRAY_PORT}?security=reality&type=splithttp&path=${SPLITHTTP_PATH}&mode=packet-up&sni=${CUR_SNI}&fp=chrome&pbk=${PUBLIC_KEY}&sid=${SHORT_ID}#${CUR_EMAIL}"
                 echo -e "${CYAN}================================================================${NC}"
                 echo -e "${CYAN}               ДАННЫЕ ПОДКЛЮЧЕНИЯ: $CUR_EMAIL                  ${NC}"
                 echo -e "${CYAN}================================================================${NC}"

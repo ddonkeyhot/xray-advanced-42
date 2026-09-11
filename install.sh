@@ -271,10 +271,9 @@ cat << CONF_EOF > "$CONFIG_FILE"
         "decryption": "none"
       },
       "streamSettings": {
-        "network": "xhttp",
-        "xhttpSettings": {
+        "network": "splithttp",
+        "splithttpSettings": {
           "path": "/download",
-          "host": "gateway.icloud.com",
           "mode": "packet-up"
         },
         "security": "reality",

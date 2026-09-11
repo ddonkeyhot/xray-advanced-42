@@ -28,7 +28,7 @@ fi
 
 SERVER_IP=$(curl -4 -s --connect-timeout 3 icanhazip.com || curl -4 -s --connect-timeout 3 api.ipify.org || echo "YOUR_SERVER_IP")
 XRAY_PORT=$(jq -r '.inbounds[0].port // 443' "$CONFIG_FILE")
-XHTTP_PATH=$(jq -r '.inbounds[0].streamSettings.xhttpSettings.path // "/download"' "$CONFIG_FILE")
+SPLITHTTP_PATH=$(jq -r '.inbounds[0].streamSettings.splithttpSettings.path // "/download"' "$CONFIG_FILE")
 
 while true; do
 
@@ -96,7 +96,7 @@ while true; do
     fi
 
 
-    VLESS_URI="vless://${NEW_UUID}@${SERVER_IP}:${XRAY_PORT}?security=reality&type=xhttp&path=%2Fdownload&host=gateway.icloud.com&mode=packet-up&sni=${SELECTED_SNI}&fp=chrome&pbk=${PUBLIC_KEY}&sid=${SHORT_ID}#${USER_NAME}"
+    VLESS_URI="vless://${NEW_UUID}@${SERVER_IP}:${XRAY_PORT}?security=reality&type=splithttp&path=${SPLITHTTP_PATH}&mode=packet-up&sni=${SELECTED_SNI}&fp=chrome&pbk=${PUBLIC_KEY}&sid=${SHORT_ID}#${USER_NAME}"
 
     clear
     echo -e "${GREEN}================================================================${NC}"
@@ -105,7 +105,7 @@ while true; do
     echo -e "Имя:        ${CYAN}$USER_NAME${NC}"
     echo -e "UUID:       ${CYAN}$NEW_UUID${NC}"
     echo -e "Режим WARP: $(if [[ "$WARP_ENABLED" = true ]]; then echo -e "${GREEN}ВКЛЮЧЕН${NC}"; else echo -e "${YELLOW}ВЫКЛЮЧЕН (Direct)${NC}"; fi)"
-    echo -e "Транспорт:  ${CYAN}xHTTP (packet-up)${NC}"
+    echo -e "Транспорт:  ${CYAN}SplitHTTP (packet-up)${NC}"
     echo -e "${CYAN}----------------------------------------------------------------${NC}"
     echo -e "${YELLOW}Строка подключения (VLESS URI):${NC}"
     echo -e "${CYAN}${VLESS_URI}${NC}"
