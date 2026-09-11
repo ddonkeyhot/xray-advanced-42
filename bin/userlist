@@ -124,7 +124,7 @@ while true; do
                 fi
                 read -p "Переключить статус WARP на '$NEW_WARP_STATE'? [y/N]: " CONFIRM_WARP
                 if [[ "$CONFIRM_WARP" =~ ^[yYдД]$ ]]; then
-                    TMP_CFG=$(mktemp)
+                    TMP_CFG=$(mktemp --suffix=.json)
                     jq --arg email "$CUR_EMAIL" --argjson warp "$NEW_WARP_STATE" '
                         (.inbounds[0].settings.clients[] | select(.email == $email).warp) = $warp
                     ' "$CONFIG_FILE" > "$TMP_CFG"
@@ -155,7 +155,7 @@ while true; do
                 read -p "Выберите номер нового SNI [1-${#SNI_LIST[@]}]: " NEW_SNI_CHOICE
                 if [[ "$NEW_SNI_CHOICE" =~ ^[0-9]+$ ]] && (( NEW_SNI_CHOICE >= 1 && NEW_SNI_CHOICE <= ${#SNI_LIST[@]} )); then
                     CHOSEN_SNI="${SNI_LIST[$((NEW_SNI_CHOICE-1))]}"
-                    TMP_CFG=$(mktemp)
+                    TMP_CFG=$(mktemp --suffix=.json)
                     jq --arg email "$CUR_EMAIL" --arg sni "$CHOSEN_SNI" '
                         (.inbounds[0].settings.clients[] | select(.email == $email).sni) = $sni
                     ' "$CONFIG_FILE" > "$TMP_CFG"
@@ -169,7 +169,7 @@ while true; do
                 echo -e "\n${RED}⚠️  ВНИМАНИЕ! Вы собираетесь удалить пользователя '$CUR_EMAIL'.${NC}"
                 read -p "Вы абсолютно уверены? [y/N]: " CONFIRM_DEL
                 if [[ "$CONFIRM_DEL" =~ ^[yYдД]$ ]]; then
-                    TMP_CFG=$(mktemp)
+                    TMP_CFG=$(mktemp --suffix=.json)
                     jq --arg email "$CUR_EMAIL" '
                         .inbounds[0].settings.clients |= map(select(.email != $email)) |
                         (.routing.rules[] | select(.outboundTag == "warp").user) -= [$email]

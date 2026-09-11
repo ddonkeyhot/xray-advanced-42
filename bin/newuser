@@ -88,7 +88,7 @@ while true; do
         --argjson warp "$WARP_ENABLED" \
         '{id: $id, email: $email, flow: "", sni: $sni, warp: $warp}')
 
-    TMP_CFG=$(mktemp)
+    TMP_CFG=$(mktemp --suffix=.json)
     jq --argjson client "$CLIENT_OBJ" '.inbounds[0].settings.clients += [$client]' "$CONFIG_FILE" > "$TMP_CFG"
 
     if [[ "$WARP_ENABLED" = true ]]; then
