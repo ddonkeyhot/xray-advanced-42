@@ -191,6 +191,9 @@ if [[ ! -f "$REALITY_ENV" ]]; then
         echo -e "${RED}[ОШИБКА] Не удалось распарсить ключи из вывода Xray:${NC}\n$KEY_PAIR"
         exit 1
     fi
+        echo -e "${RED}[ОШИБКА] Не удалось распарсить ключи из вывода Xray:${NC}\n$KEY_PAIR"
+        exit 1
+    fi
 
     cat << ENV_EOF > "$REALITY_ENV"
 PRIVATE_KEY="$PRIVATE_KEY"
@@ -376,7 +379,7 @@ fi
 chmod 644 "$CONFIG_FILE"
 chown nobody:nogroup "$CONFIG_FILE" 2>/dev/null || chown nobody:nobody "$CONFIG_FILE" 2>/dev/null || true
 
-if ! /usr/local/bin/xray run -test -config "$CONFIG_FILE"; then
+if ! /usr/local/bin/xray run -test -config "$CONFIG_FILE" 2>&1 | grep -q "Configuration OK"; then
     echo -e "${RED}[ОШИБКА] Конфигурация Xray не прошла проверку синтаксиса!${NC}"
     exit 1
 fi
