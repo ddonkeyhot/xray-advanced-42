@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -u
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -46,7 +46,7 @@ cp "$TMP_DIR/geoip.dat" "$TMP_DIR/share/xray/"
 cp "$TMP_DIR/geosite.dat" "$TMP_DIR/share/xray/"
 export XRAY_LOCATION_ASSET="$TMP_DIR/share/xray"
 
-if ! $XRAY_BIN -test -config "$CONFIG_FILE" >/dev/null 2>&1; then
+if ! timeout 5 $XRAY_BIN run -test -config "$CONFIG_FILE" >/dev/null 2>&1; then
     echo -e "${RED}[ОШИБКА] Xray не смог запуститься с новыми базами! Откат обновления.${NC}"
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] [ERROR] [GEOIP] Xray не прошел тест с новыми базами" >> "$LOG_FILE"
     exit 1

@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -u
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -19,14 +19,14 @@ echo -e "${CYAN}================================================================
 echo -e "Опрашиваю репозитории GitHub...\n"
 
 # 1. Версия ядра Xray
-CUR_CORE=$(/usr/local/bin/xray version | head -n 1 | awk '{print $2}' || echo "N/A")
-NEW_CORE=$(curl -s "https://api.github.com/repos/XTLS/Xray-core/releases/latest" | jq -r '.tag_name' || echo "N/A")
+CUR_CORE=$(timeout 2 /usr/local/bin/xray version 2>/dev/null | head -n 1 | awk '{print $2}' || echo "N/A")
+NEW_CORE=$(timeout 5 curl -s "https://api.github.com/repos/XTLS/Xray-core/releases/latest" 2>/dev/null | jq -r '.tag_name' 2>/dev/null || echo "N/A")
 
 # 2. Версия скриптов (читаем из последнего коммита GitHub, локально не храним версию, просто показываем возможность)
-LATEST_COMMIT=$(curl -s "https://api.github.com/repos/ddonkeyhot/xray-advanced-42/commits/main" | jq -r '.sha' | cut -c 1-7 || echo "N/A")
+LATEST_COMMIT=$(timeout 5 curl -s "https://api.github.com/repos/ddonkeyhot/xray-advanced-42/commits/main" 2>/dev/null | jq -r '.sha' 2>/dev/null | cut -c 1-7 || echo "N/A")
 
 # 3. GeoIP
-GEOIP_DATE=$(stat -c %y "/usr/local/share/xray/geoip.dat" | cut -d' ' -f1 || echo "N/A")
+GEOIP_DATE=$(stat -c %y "/usr/local/share/xray/geoip.dat" 2>/dev/null | cut -d' ' -f1 || echo "N/A")
 
 printf " %-25s | %-15s | %-15s \n" "КОМПОНЕНТ" "ТЕКУЩАЯ ВЕРСИЯ" "ДОСТУПНО НА GITHUB"
 printf "----------------------------------------------------------------\n"
