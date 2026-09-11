@@ -35,7 +35,7 @@ else
     TEST_OUT=$(timeout 5 /usr/local/bin/xray run -test -config "$CONFIG_FILE" 2>&1)
     TEST_EXIT=$?
     
-    if [[ $TEST_EXIT -eq 0 ]]; then
+    if echo "$TEST_OUT" | grep -q "Configuration OK"; then
         echo -e "${GREEN}ИДЕАЛЕН (passed)${NC}"
     elif [[ $TEST_EXIT -eq 124 ]]; then
         echo -e "${RED}ТАЙМАУТ ПРОВЕРКИ (зависла)${NC}"
