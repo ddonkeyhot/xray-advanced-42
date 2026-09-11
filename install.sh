@@ -273,8 +273,8 @@ cat << CONF_EOF > "$CONFIG_FILE"
       "streamSettings": {
         "network": "xhttp",
         "xhttpSettings": {
-          "path": "/download",
-          "mode": "packet-up"
+          "path": "/",
+          "mode": "auto"
         },
         "security": "reality",
         "realitySettings": {

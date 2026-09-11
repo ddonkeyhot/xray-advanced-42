@@ -85,7 +85,9 @@ while true; do
     fi
 
 
-    echo -e "Транспорт:  ${CYAN}xHTTP (packet-up)${NC}"
+    VLESS_URI="vless://${NEW_UUID}@${SERVER_IP}:${XRAY_PORT}?security=reality&path=%2F&host=&mode=auto&sni=${SELECTED_SNI}&fp=chrome&pbk=${PUBLIC_KEY}&sid=${SHORT_ID}&spx=%2F&type=xhttp&encryption=none#${USER_NAME}"
+
+    echo -e "Транспорт:  ${CYAN}xHTTP (auto)${NC}"
     echo -e "${CYAN}----------------------------------------------------------------${NC}"
     echo -e "${YELLOW}Строка подключения (VLESS URI):${NC}"
     echo -e "${CYAN}${VLESS_URI}${NC}"
