@@ -62,6 +62,7 @@ case "$UPG_CHOICE" in
         cp -r "$TMP_BIN/bin/"* /usr/local/bin/
         chmod +x /usr/local/bin/*
         rm -rf "$TMP_BIN"
+        if [[ -f "/usr/local/bin/xray_migrate" ]]; then /usr/local/bin/xray_migrate; fi
         echo -e "${GREEN}✓ Система полностью обновлена.${NC}"
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] [INFO] [UPGRADE] Выполнено полное обновление системы" >> "$LOG_FILE"
         systemctl restart xray
@@ -81,6 +82,7 @@ case "$UPG_CHOICE" in
         cp -r "$TMP_BIN/bin/"* /usr/local/bin/
         chmod +x /usr/local/bin/*
         rm -rf "$TMP_BIN"
+        if [[ -f "/usr/local/bin/xray_migrate" ]]; then /usr/local/bin/xray_migrate; fi
         echo -e "${GREEN}✓ Утилиты обновлены.${NC}"
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] [INFO] [UPGRADE] Утилиты CLI обновлены" >> "$LOG_FILE"
         ;;

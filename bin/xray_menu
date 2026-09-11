@@ -8,6 +8,10 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
+if [[ -f "/usr/local/bin/xray_migrate" ]]; then
+    /usr/local/bin/xray_migrate
+fi
+
 while true; do
     clear
     echo -e "${CYAN}================================================================${NC}"
