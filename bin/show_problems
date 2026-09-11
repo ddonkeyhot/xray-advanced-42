@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -u
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -18,27 +18,37 @@ echo -e "${CYAN}================================================================
 
 # 1. Проверка Systemd
 echo -n "1. Служба Xray (Systemd): "
-if systemctl is-active --quiet xray; then
+if systemctl is-active --quiet xray 2>/dev/null; then
     echo -e "${GREEN}АКТИВНА (running)${NC}"
 else
     echo -e "${RED}ОСТАНОВЛЕНА / ОШИБКА${NC}"
     echo -e "   ${YELLOW}▶ Журнал ошибок:${NC}"
-    journalctl -u xray -n 5 --no-pager | sed 's/^/      /'
+    journalctl -u xray -n 5 --no-pager 2>/dev/null | sed 's/^/      /' || true
 fi
 
 # 2. Проверка валидности JSON конфигурации
 echo -n "2. Синтаксис config.json: "
-if /usr/local/bin/xray -test -config "$CONFIG_FILE" >/dev/null 2>&1; then
-    echo -e "${GREEN}ИДЕАЛЕН (passed)${NC}"
+if [[ ! -f "$CONFIG_FILE" ]]; then
+    echo -e "${RED}ФАЙЛ НЕ НАЙДЕН${NC}"
 else
-    echo -e "${RED}НАЙДЕНЫ ОШИБКИ${NC}"
-    echo -e "   ${YELLOW}▶ Детали ошибки:${NC}"
-    /usr/local/bin/xray -test -config "$CONFIG_FILE" 2>&1 | head -n 3 | sed 's/^/      /'
+    # Run test and capture output
+    TEST_OUT=$(timeout 5 /usr/local/bin/xray run -test -config "$CONFIG_FILE" 2>&1)
+    TEST_EXIT=$?
+    
+    if [[ $TEST_EXIT -eq 0 ]]; then
+        echo -e "${GREEN}ИДЕАЛЕН (passed)${NC}"
+    elif [[ $TEST_EXIT -eq 124 ]]; then
+        echo -e "${RED}ТАЙМАУТ ПРОВЕРКИ (зависла)${NC}"
+    else
+        echo -e "${RED}НАЙДЕНЫ ОШИБКИ${NC}"
+        echo -e "   ${YELLOW}▶ Детали ошибки:${NC}"
+        echo "$TEST_OUT" | head -n 3 | sed 's/^/      /'
+    fi
 fi
 
 # 3. Проверка порта (443)
 echo -n "3. Прослушивание порта 443: "
-if ss -tuln | grep -q ":443 "; then
+if ss -tuln 2>/dev/null | grep -q ":443 "; then
     echo -e "${GREEN}ПОРТ ОТКРЫТ И ПРОСЛУШИВАЕТСЯ${NC}"
 else
     echo -e "${RED}ПОРТ 443 НЕ СЛУШАЕТСЯ (сервер не принимает трафик)${NC}"
@@ -46,7 +56,7 @@ fi
 
 # 4. Проверка UFW и Firewall
 echo -n "4. Статус UFW (Firewall): "
-if command -v ufw >/dev/null 2>&1 && ufw status | grep -q "active"; then
+if command -v ufw >/dev/null 2>&1 && ufw status 2>/dev/null | grep -q "active"; then
     echo -e "${GREEN}ВКЛЮЧЕН (active)${NC}"
 else
     echo -e "${YELLOW}ОТКЛЮЧЕН ИЛИ НЕ УСТАНОВЛЕН${NC}"
@@ -55,8 +65,8 @@ fi
 # 5. Проверка баз GeoIP/GeoSite
 echo -n "5. Дата баз GeoIP/GeoSite: "
 if [[ -f "/usr/local/share/xray/geoip.dat" && -f "/usr/local/share/xray/geosite.dat" ]]; then
-    GEOIP_DATE=$(stat -c %y "/usr/local/share/xray/geoip.dat" | cut -d' ' -f1)
-    GEOSITE_DATE=$(stat -c %y "/usr/local/share/xray/geosite.dat" | cut -d' ' -f1)
+    GEOIP_DATE=$(stat -c %y "/usr/local/share/xray/geoip.dat" 2>/dev/null | cut -d' ' -f1 || echo "N/A")
+    GEOSITE_DATE=$(stat -c %y "/usr/local/share/xray/geosite.dat" 2>/dev/null | cut -d' ' -f1 || echo "N/A")
     echo -e "${GREEN}ОК (GeoIP: $GEOIP_DATE | GeoSite: $GEOSITE_DATE)${NC}"
 else
     echo -e "${RED}БАЗЫ ОТСУТСТВУЮТ! Правила блокировки могут не работать!${NC}"
@@ -64,7 +74,7 @@ fi
 
 # 6. Проверка Cloudflare WARP
 echo -n "6. Состояние Cloudflare WARP: "
-if jq -e '.outbounds[] | select(.tag == "warp")' "$CONFIG_FILE" >/dev/null 2>&1; then
+if command -v jq >/dev/null 2>&1 && jq -e '.outbounds[] | select(.tag == "warp")' "$CONFIG_FILE" >/dev/null 2>&1; then
     echo -e "${GREEN}НАСТРОЕНО В OUTBOUNDS${NC}"
 else
     echo -e "${YELLOW}НЕ НАСТРОЕНО ИЛИ ОТКЛЮЧЕНО (режим Direct)${NC}"
@@ -74,7 +84,7 @@ echo -e "${CYAN}================================================================
 echo -e "${CYAN}                   ЖУРНАЛ ИНЦИДЕНТОВ (HEALTH LOG)               ${NC}"
 echo -e "${CYAN}================================================================${NC}"
 if [[ -f "$LOG_FILE" ]]; then
-    tail -n 15 "$LOG_FILE" | while read -r line; do
+    tail -n 15 "$LOG_FILE" 2>/dev/null | while read -r line; do
         if [[ "$line" == *"[ERROR]"* ]]; then
             echo -e "${RED}$line${NC}"
         elif [[ "$line" == *"[WARN]"* ]]; then
