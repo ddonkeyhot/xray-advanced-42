@@ -126,6 +126,19 @@ echo -e "${BLUE}▶ [1/7] Установка системных зависимо
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y >/dev/null 2>&1 || true
 apt-get install -y curl jq qrencode wireguard-tools git coreutils util-linux unzip openssl >/dev/null 2>&1
+MISSING_PKGS=""
+for cmd in curl jq qrencode wg git unzip openssl; do
+    if ! command -v $cmd >/dev/null 2>&1; then
+        MISSING_PKGS="$MISSING_PKGS $cmd"
+    fi
+done
+
+if [[ -n "$MISSING_PKGS" ]]; then
+    echo -e "${RED}[ОШИБКА] Не удалось установить следующие утилиты: $MISSING_PKGS${NC}"
+    echo -e "Пожалуйста, установите их вручную: sudo apt-get update \&\& sudo apt-get install -y curl jq qrencode wireguard-tools git unzip openssl"
+    exit 1
+fi
+
 echo -e "${GREEN}[✓] Зависимости установлены.${NC}"
 
 # Шаг 2: Установка Xray-core
