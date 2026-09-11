@@ -149,6 +149,7 @@ bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release
     echo -e "${RED}[ОШИБКА] Не удалось установить Xray-core. Проверьте вывод выше.${NC}"
     exit 1
 fi
+fi
 if [[ ! -f /usr/local/bin/xray ]]; then
     echo -e "${RED}[ОШИБКА] Исполняемый файл /usr/local/bin/xray не найден после установки.${NC}"
     exit 1
