@@ -322,7 +322,7 @@ cat << CONF_EOF > "$CONFIG_FILE"
       {
         "type": "field",
         "outboundTag": "warp",
-        "user": []
+        "user": ["user1"]
       },
       {
         "type": "field",
