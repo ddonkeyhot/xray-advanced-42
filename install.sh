@@ -55,7 +55,7 @@ if [[ "${1:-}" == "--restore" ]]; then
     echo -e "  4. Cron-задача обновления баз будет удалена."
     echo -e "${RED}----------------------------------------------------------------${NC}"
     echo -e "Чтобы подтвердить удаление, введите слово ${RED}RESTORE${NC} заглавными буквами:"
-    read -r CONFIRM_INPUT
+    read -r CONFIRM_INPUT < /dev/tty
 
     if [[ "$CONFIRM_INPUT" != "RESTORE" ]]; then
         echo -e "${GREEN}[ОТМЕНА] Удаление отменено пользователем.${NC}"
@@ -406,10 +406,10 @@ echo -e "${GREEN}          УСТАНОВКА СЕРВЕРА УСПЕШНО ЗА
 echo -e "${CYAN}================================================================${NC}"
 echo -e "Теперь сервер готов к работе."
 echo -e "Создать первого пользователя прямо сейчас? [Y/n]: "
-read -r CREATE_FIRST
+read -r CREATE_FIRST < /dev/tty
 
 if [[ -z "$CREATE_FIRST" || "$CREATE_FIRST" =~ ^[yYдД]$ ]]; then
-    newuser
+    newuser < /dev/tty
 fi
 
 echo -e "\n${CYAN}================================================================${NC}"
