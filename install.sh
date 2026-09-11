@@ -295,8 +295,7 @@ cat << CONF_EOF > "$CONFIG_FILE"
         "type": "field",
         "outboundTag": "block",
         "domain": [
-          "geosite:category-ru",
-          "geosite:ru"
+          "geosite:category-ru"
         ]
       },
       {
