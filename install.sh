@@ -218,9 +218,9 @@ WARP_IPV6=""
 WARP_PEER_PUBKEY="bmXOC+F1FxEMF9dyiK2H5/1SUtzHZsVoW++ZKgukR2g="
 
 if [[ -n "${MANUAL_WARP_PRIV:-}" && -n "${MANUAL_WARP_IPV4:-}" && -n "${MANUAL_WARP_IPV6:-}" ]]; then
-    WARP_PRIVATE_KEY="$MANUAL_WARP_PRIV"
-    WARP_IPV4="$MANUAL_WARP_IPV4"
-    WARP_IPV6="$MANUAL_WARP_IPV6"
+    WARP_PRIVATE_KEY="${MANUAL_WARP_PRIV:-}"
+    WARP_IPV4="${MANUAL_WARP_IPV4:-}"
+    WARP_IPV6="${MANUAL_WARP_IPV6:-}"
     WARP_CONFIG_AVAILABLE=true
     echo -e "${GREEN}[✓] Используются переданные вручную настройки WARP (IPv4: $WARP_IPV4).${NC}"
 else
