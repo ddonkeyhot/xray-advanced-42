@@ -113,6 +113,12 @@ while true; do
                     read -p "Нажмите Enter для возврата..."
                     ;;
                 2)
+                    if [[ "$CUR_WARP" == "false" ]] && ! jq -e '.outbounds[] | select(.tag == "warp")' "$CONFIG_FILE" >/dev/null 2>&1; then
+                        echo -e "\n${RED}[ОШИБКА] Невозможно включить WARP, так как он не настроен или заблокирован на этом сервере.${NC}"
+                        read -p "Нажмите Enter для возврата..."
+                        continue
+                    fi
+                    
                     TMP_CFG=$(mktemp --suffix=.json)
                     if [[ "$CUR_WARP" == "true" ]]; then
                         jq --arg email "$CUR_EMAIL" '

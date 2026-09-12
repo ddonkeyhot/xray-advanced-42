@@ -51,15 +51,22 @@ while true; do
         continue
     fi
 
-    echo -e "\n${BLUE}Настройка Cloudflare WARP:${NC}"
-    echo -e "WARP скрывает реальный IP сервера и открывает ChatGPT/стриминги."
-    echo -e "По умолчанию рекомендуется ${GREEN}ДА (Y)${NC} для доступа к заблокированным сайтам."
-    read -p "Включить WARP для '$USER_NAME'? [Y/n] (по умолчанию Y): " WARP_INPUT
-    
     SELECTED_SNI="gateway.icloud.com"
-    WARP_ENABLED=true
-    if [[ "$WARP_INPUT" =~ ^[nNнН]$ ]]; then
-        WARP_ENABLED=false
+    WARP_ENABLED=false
+    
+    # Check if WARP outbound actually exists in config
+    if jq -e '.outbounds[] | select(.tag == "warp")' "$CONFIG_FILE" >/dev/null 2>&1; then
+        echo -e "\n${BLUE}Настройка Cloudflare WARP:${NC}"
+        echo -e "WARP скрывает реальный IP сервера и открывает ChatGPT/стриминги."
+        echo -e "По умолчанию рекомендуется ${YELLOW}НЕТ (N)${NC} для максимальной скорости (WARP может блокироваться)."
+        read -p "Включить WARP для '$USER_NAME'? [y/N] (по умолчанию N): " WARP_INPUT
+        
+        if [[ "$WARP_INPUT" =~ ^[yYдД]$ ]]; then
+            WARP_ENABLED=true
+        fi
+    else
+        echo -e "\n${YELLOW}[!] На этом сервере WARP не настроен (или недоступен). Режим WARP будет отключен.${NC}"
+        sleep 2
     fi
 
     NEW_UUID=$(/usr/local/bin/xray uuid)
