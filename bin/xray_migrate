@@ -19,7 +19,7 @@ HAS_WARP=$(jq -e '.outbounds[] | select(.tag == "warp")' "$CONFIG_FILE" >/dev/nu
 NEEDS_MIGRATE="false"
 
 if [[ "$HAS_WARP" == "true" ]]; then
-    if jq -e '.outbounds[] | select(.tag == "warp" and .settings.mtu == null)' "$CONFIG_FILE" >/dev/null 2>&1; then
+    if jq -e '.outbounds[] | select(.tag == "warp" and (.settings.mtu == null or .settings.kernelMode == null))' "$CONFIG_FILE" >/dev/null 2>&1; then
         NEEDS_MIGRATE="true"
         echo -e "${BLUE}▶ Миграция: Обнаружена старая конфигурация WARP (без MTU и reserved).${NC}"
     fi
