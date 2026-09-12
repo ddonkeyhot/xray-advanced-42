@@ -25,10 +25,19 @@ if jq -e '.outbounds[] | select(.tag == "warp" and .settings.mtu == null)' "$CON
 
     WARP_LOCAL_PRIV=$(wg genkey)
     WARP_LOCAL_PUB=$(echo "$WARP_LOCAL_PRIV" | wg pubkey)
-    WARP_RESP=$(curl -s -m 10 -X POST "https://api.cloudflareclient.com/v0a1922/reg" \
-        -H "User-Agent: okhttp/3.12.1" \
-        -H "Content-Type: application/json; charset=UTF-8" \
-        -d "{\"key\":\"${WARP_LOCAL_PUB}\",\"install_id\":\"\",\"fcm_token\":\"\",\"tos\":\"$(date -u +%Y-%m-%dT%H:%M:%S.000Z)\",\"model\":\"PC\",\"serial_number\":\"\",\"locale\":\"en_US\"}" || true)
+    
+    WARP_RESP=""
+    for i in {1..3}; do
+        WARP_RESP=$(curl -s -m 10 -X POST "https://api.cloudflareclient.com/v0a1922/reg" \
+            -H "User-Agent: okhttp/3.12.1" \
+            -H "Content-Type: application/json; charset=UTF-8" \
+            -d "{\"key\":\"${WARP_LOCAL_PUB}\",\"install_id\":\"\",\"fcm_token\":\"\",\"tos\":\"$(date -u +%Y-%m-%dT%H:%M:%S.000Z)\",\"model\":\"PC\",\"serial_number\":\"\",\"locale\":\"en_US\"}" || true)
+        
+        if echo "$WARP_RESP" | jq -e '.id' >/dev/null 2>&1; then
+            break
+        fi
+        sleep 3
+    done
 
     if echo "$WARP_RESP" | jq -e '.id' >/dev/null 2>&1; then
         WARP_PRIVATE_KEY="$WARP_LOCAL_PRIV"
