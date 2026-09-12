@@ -15,8 +15,20 @@ if [[ ! -f "$CONFIG_FILE" ]]; then
 fi
 
 # 1. WARP MTU & Reserved bytes migration
-if jq -e '.outbounds[] | select(.tag == "warp" and .settings.mtu == null)' "$CONFIG_FILE" >/dev/null 2>&1; then
-    echo -e "${BLUE}▶ Миграция: Обнаружена старая конфигурация WARP (без MTU и reserved).${NC}"
+HAS_WARP=$(jq -e '.outbounds[] | select(.tag == "warp")' "$CONFIG_FILE" >/dev/null 2>&1 && echo "true" || echo "false")
+NEEDS_MIGRATE="false"
+
+if [[ "$HAS_WARP" == "true" ]]; then
+    if jq -e '.outbounds[] | select(.tag == "warp" and .settings.mtu == null)' "$CONFIG_FILE" >/dev/null 2>&1; then
+        NEEDS_MIGRATE="true"
+        echo -e "${BLUE}▶ Миграция: Обнаружена старая конфигурация WARP (без MTU и reserved).${NC}"
+    fi
+else
+    NEEDS_MIGRATE="true"
+    echo -e "${BLUE}▶ Миграция: Восстановление отсутствующего исходящего канала WARP.${NC}"
+fi
+
+if [[ "$NEEDS_MIGRATE" == "true" ]]; then
     echo -e "   Запрашиваем новые данные у Cloudflare..."
 
     if ! command -v wg >/dev/null 2>&1; then
@@ -52,12 +64,13 @@ if jq -e '.outbounds[] | select(.tag == "warp" and .settings.mtu == null)' "$CON
         fi
 
         TMP_CFG=$(mktemp --suffix=.json)
-        jq --arg priv "$WARP_PRIVATE_KEY" \
+        WARP_OBJ=$(jq -n \
+           --arg priv "$WARP_PRIVATE_KEY" \
            --arg pub "bmXOC+F1FxEMF9dyiK2H5/1SUtzHZsVoW++ZKgukR2g=" \
            --arg ip4 "$WARP_IPV4/32" \
            --arg ip6 "$WARP_IPV6/128" \
            --argjson reserved "$WARP_RESERVED" \
-           '(.outbounds[] | select(.tag == "warp")) = {
+           '{
               protocol: "wireguard",
               tag: "warp",
               settings: {
@@ -73,7 +86,13 @@ if jq -e '.outbounds[] | select(.tag == "warp" and .settings.mtu == null)' "$CON
                 ],
                 mtu: 1280
               }
-           }' "$CONFIG_FILE" > "$TMP_CFG"
+           }')
+           
+        if [[ "$HAS_WARP" == "true" ]]; then
+            jq --argjson warp "$WARP_OBJ" '(.outbounds[] | select(.tag == "warp")) = $warp' "$CONFIG_FILE" > "$TMP_CFG"
+        else
+            jq --argjson warp "$WARP_OBJ" '.outbounds += [$warp]' "$CONFIG_FILE" > "$TMP_CFG"
+        fi
 
         if /usr/local/bin/xray -test -config "$TMP_CFG" >/dev/null 2>&1; then
             mv "$TMP_CFG" "$CONFIG_FILE" && chmod 644 "$CONFIG_FILE"
