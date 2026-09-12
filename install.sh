@@ -216,11 +216,14 @@ WARP_CONFIG_AVAILABLE=false
 WARP_PRIVATE_KEY=""
 WARP_IPV4=""
 WARP_IPV6=""
-WARP_PEER_PUBKEY="bmXOC+F1FxEMF9dyiK2H5/1SUtzHZsVoW++ZKgukR2g="
+WARP_PEER_PUBKEY=""
+WARP_ENDPOINT=""
 WARP_RESERVED="[0,0,0]"
 
 if [[ -n "${MANUAL_WARP_PRIV:-}" && -n "${MANUAL_WARP_IPV4:-}" && -n "${MANUAL_WARP_IPV6:-}" ]]; then
     WARP_PRIVATE_KEY="${MANUAL_WARP_PRIV:-}"
+    WARP_PEER_PUBKEY="bmXOC+F1FxEMF9dyiK2H5/1SUtzHZsVoW++ZKgukR2g="
+    WARP_ENDPOINT="162.159.192.1:2408"
     WARP_IPV4="${MANUAL_WARP_IPV4:-}"
     WARP_IPV6="${MANUAL_WARP_IPV6:-}"
     WARP_CONFIG_AVAILABLE=true
@@ -250,6 +253,8 @@ if echo "$WARP_RESP" | jq -e '.id' >/dev/null 2>&1; then
     WARP_IPV6=$(echo "$WARP_RESP" | jq -r '.config.interface.addresses.v6')
     WARP_CONFIG_AVAILABLE=true
     WARP_CLIENT_ID=$(echo "$WARP_RESP" | jq -r ".config.client_id // \"\"")
+    WARP_PEER_PUBKEY=$(echo "$WARP_RESP" | jq -r ".config.peers[0].public_key")
+    WARP_ENDPOINT=$(echo "$WARP_RESP" | jq -r ".config.peers[0].endpoint.host")
     if [[ -n "$WARP_CLIENT_ID" ]]; then
         RESERVED_BYTES=$(echo -n "$WARP_CLIENT_ID" | base64 -d | od -An -t u1 | tr -d "\n" | tr -s " " | sed "s/^ //; s/ /,/g" | sed "s/,$//")
         WARP_RESERVED="[$RESERVED_BYTES]"
@@ -361,6 +366,7 @@ if [[ "$WARP_CONFIG_AVAILABLE" = true ]]; then
     WARP_OUTBOUND=$(jq -n \
         --arg priv "$WARP_PRIVATE_KEY" \
         --arg pub "$WARP_PEER_PUBKEY" \
+        --arg endpoint "$WARP_ENDPOINT" \
         --arg ip4 "$WARP_IPV4/32" \
         --arg ip6 "$WARP_IPV6/128" \
         --argjson reserved "$WARP_RESERVED" \
@@ -373,12 +379,13 @@ if [[ "$WARP_CONFIG_AVAILABLE" = true ]]; then
             peers: [
               {
                 publicKey: $pub,
-                endpoint: "162.159.192.1:2408",
+                endpoint: $endpoint,
                 keepAlive: 25,
                 reserved: $reserved
               }
             ],
-            mtu: 1280
+            mtu: 1280,
+            kernelMode: false
           }
         }')
     TMP_CFG=$(mktemp)

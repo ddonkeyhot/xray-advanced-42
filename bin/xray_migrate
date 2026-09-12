@@ -56,6 +56,8 @@ if [[ "$NEEDS_MIGRATE" == "true" ]]; then
         WARP_IPV4=$(echo "$WARP_RESP" | jq -r '.config.interface.addresses.v4')
         WARP_IPV6=$(echo "$WARP_RESP" | jq -r '.config.interface.addresses.v6')
         WARP_CLIENT_ID=$(echo "$WARP_RESP" | jq -r ".config.client_id // \"\"")
+        WARP_PEER_PUBKEY=$(echo "$WARP_RESP" | jq -r ".config.peers[0].public_key")
+        WARP_ENDPOINT=$(echo "$WARP_RESP" | jq -r ".config.peers[0].endpoint.host")
         
         WARP_RESERVED="[0,0,0]"
         if [[ -n "$WARP_CLIENT_ID" ]]; then
@@ -66,7 +68,8 @@ if [[ "$NEEDS_MIGRATE" == "true" ]]; then
         TMP_CFG=$(mktemp --suffix=.json)
         WARP_OBJ=$(jq -n \
            --arg priv "$WARP_PRIVATE_KEY" \
-           --arg pub "bmXOC+F1FxEMF9dyiK2H5/1SUtzHZsVoW++ZKgukR2g=" \
+           --arg pub "$WARP_PEER_PUBKEY" \
+           --arg endpoint "$WARP_ENDPOINT" \
            --arg ip4 "$WARP_IPV4/32" \
            --arg ip6 "$WARP_IPV6/128" \
            --argjson reserved "$WARP_RESERVED" \
@@ -79,12 +82,13 @@ if [[ "$NEEDS_MIGRATE" == "true" ]]; then
                 peers: [
                   {
                     publicKey: $pub,
-                    endpoint: "162.159.192.1:2408",
+                    endpoint: $endpoint,
                     keepAlive: 25,
                     reserved: $reserved
                   }
                 ],
-                mtu: 1280
+                mtu: 1280,
+                kernelMode: false
               }
            }')
            
